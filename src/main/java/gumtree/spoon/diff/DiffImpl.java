@@ -19,6 +19,10 @@ import com.github.gumtreediff.matchers.Matcher;
 import com.github.gumtreediff.tree.ITree;
 import com.github.gumtreediff.tree.TreeContext;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import gumtree.spoon.builder.SpoonGumTreeBuilder;
 import gumtree.spoon.diff.operations.DeleteOperation;
 import gumtree.spoon.diff.operations.InsertOperation;
@@ -254,6 +258,47 @@ public class DiffImpl implements Diff {
 			}
 		}
 		return stringBuilder.toString();
+	}
+
+	@Override
+	public String toJson() {
+		JsonObject o = new JsonObject();
+		JsonArray nodeChildens = new JsonArray();
+		o.add("operations", nodeChildens);
+
+		for (Operation operation : rootOperations) {
+			JsonObject childJSon = new JsonObject();
+			childJSon.addProperty("toString", operation.toString());
+			childJSon.addProperty("action", operation.getClass().getSimpleName());
+			childJSon.addProperty("position", operation.getPositionAsString());
+
+			ITree node = operation.getAction().getNode();
+			final CtElement nodeElement = operation.getNode();
+			String nodeType = context.getTypeLabel(node.getType());
+			if (nodeElement != null) {
+				childJSon.addProperty("SimpleNodeType", nodeElement.getClass().getSimpleName());
+				childJSon.addProperty("nodeType", nodeType);
+				childJSon.addProperty("nodeLabel", node.getLabel());
+			}
+			String kind = operation.getAction().getClass().getSimpleName() + ", \"" + nodeType + "\", \"" + node.getLabel()+ "\"";
+			childJSon.addProperty("position", operation.getPositionAsString());
+
+			if (operation instanceof UpdateOperation) {
+				// adding the new value for update
+				childJSon.addProperty("OperationKind", kind + ",  \"" + ((Update) operation.getAction()).getValue() + "\"");
+			}
+			else{
+				childJSon.addProperty("OperationKind", kind);
+
+			}
+
+			childJSon.addProperty("size", node.getDescendants().size());
+
+			nodeChildens.add(childJSon);
+		}
+
+		Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		return gson.toJson(o) + "\n";
 	}
 
 	public TreeContext getContext() {

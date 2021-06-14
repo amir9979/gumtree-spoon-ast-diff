@@ -56,11 +56,34 @@ public abstract class Operation<T extends Action> {
 		stringBuilder.append(" ").append(nodeType);
 
 		// action position
+		stringBuilder.append(getPositionAsString(action, element)).append(newline);
+
+		// code change
+		String label = partialElementPrint(element);
+		if (action instanceof Move) {
+			label = element.toString();
+		}
+		if (action instanceof Update) {
+			CtElement elementDest = (CtElement) action.getNode().getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT_DEST);
+			label += " to " + elementDest.toString();
+		}
+		String[] split = label.split(newline);
+		for (String s : split) {
+			stringBuilder.append("\t").append(s).append(newline);
+		}
+		return stringBuilder.toString();
+	}
+
+	public String getPositionAsString() {
+		return getPositionAsString(action, node);
+	}
+
+	private String getPositionAsString(Action action, CtElement element) {
 		CtElement parent = element;
 		while (parent.getParent() != null && !(parent.getParent() instanceof CtPackage)) {
 			parent = parent.getParent();
 		}
-		String position = " at ";
+		String position = "";
 		if (parent instanceof CtType) {
 			position += ((CtType) parent).getQualifiedName();
 		}
@@ -78,22 +101,7 @@ public abstract class Operation<T extends Action> {
 				position += ":" + elementDest.getPosition().getLine();
 			}
 		}
-		stringBuilder.append(position).append(newline);
-
-		// code change
-		String label = partialElementPrint(element);
-		if (action instanceof Move) {
-			label = element.toString();
-		}
-		if (action instanceof Update) {
-			CtElement elementDest = (CtElement) action.getNode().getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT_DEST);
-			label += " to " + elementDest.toString();
-		}
-		String[] split = label.split(newline);
-		for (String s : split) {
-			stringBuilder.append("\t").append(s).append(newline);
-		}
-		return stringBuilder.toString();
+		return position;
 	}
 
 	private String partialElementPrint(CtElement element) {

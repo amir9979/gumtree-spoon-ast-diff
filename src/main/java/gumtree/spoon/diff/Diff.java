@@ -76,4 +76,9 @@ public interface Diff {
 	 * returns the mappings between the compared elements
 	 */
 	public MappingStore getMappingsComp();
-}
+
+	/**
+	 * Convert to Json
+	 */
+	public String toJson();
+	}

@@ -1,6 +1,7 @@
 package gumtree.spoon;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.Map;
 
 import gumtree.spoon.builder.SpoonGumTreeBuilder;
@@ -17,6 +18,16 @@ import spoon.support.DefaultCoreFactory;
 import spoon.support.StandardEnvironment;
 import spoon.support.compiler.VirtualFile;
 import spoon.support.compiler.jdt.JDTBasedSpoonCompiler;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.RepositoryBuilder;
+import org.eclipse.jgit.patch.FileHeader;
+import org.eclipse.jgit.patch.HunkHeader;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.api.CheckoutCommand;
+import org.eclipse.jgit.api.Git;
 
 /**
  * Computes the differences between two CtElements.
@@ -151,13 +162,59 @@ public class AstComparator {
 		return getCtType(resource);
 	}
 
+//	public Iterable<RevCommit> getCommits(Repository repository, String startCommitId, String endCommitId)
+//			throws Exception {
+//		ObjectId from = repository.resolve(startCommitId);
+//		ObjectId to = repository.resolve(endCommitId);
+//		try (Git git = new Git(repository)) {
+//			List<RevCommit> revCommits = StreamSupport.stream(git.log().addRange(from, to).call()
+//					.spliterator(), false)
+//					.filter(r -> r.getParentCount() == 1)
+//					.collect(Collectors.toList());
+//			Collections.reverse(revCommits);
+//			return revCommits;
+//		}
+//	}
+
+
+	public Repository openRepository(String repositoryPath) throws Exception {
+		File folder = new File(repositoryPath);
+		Repository repository;
+		if (folder.exists()) {
+			RepositoryBuilder builder = new RepositoryBuilder();
+			repository = builder
+					.setGitDir(new File(folder, ".git"))
+					.readEnvironment()
+					.findGitDir()
+					.build();
+		} else {
+			throw new FileNotFoundException(repositoryPath);
+		}
+		return repository;
+	}
+
+
 	public static void main(String[] args) throws Exception {
 		if (args.length != 2) {
 			System.out.println("Usage: DiffSpoon <file_1>  <file_2>");
 			return;
 		}
 
+//		try (Repository repo = openRepository(this.config.getBuggySourceDirectoryPath())) {
+//			for (RevCommit currentCommit : getCommits(repo, this.config.getStartCommit(), this.config.getEndCommit())) {
+//				try {
+//					ProcessBuilder pb = new ProcessBuilder("git", "show", currentCommit.getName()+":", currentCommit.getParent(0).getName());
+//					pb.directory(new File(this.config.getBuggySourceDirectoryPath()));
+//					pb.inheritIO();
+//					pb.redirectOutput(new File(this.config.getDiffPath()));
+//					Process p = pb.start();
+//					p.waitFor();
+//				} catch (Exception e) {
+//					e.printStackTrace();
+//				}
+//				}}
+
 		final Diff result = new AstComparator().compare(new File(args[0]), new File(args[1]));
-		System.out.println(result.toString());
+		System.out.println(result.toJson());
 	}
 }
