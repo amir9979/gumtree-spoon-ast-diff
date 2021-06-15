@@ -261,20 +261,18 @@ public class DiffImpl implements Diff {
 	}
 
 	@Override
-	public String toJson() {
-		JsonObject o = new JsonObject();
+	public JsonArray toJson() {
 		JsonArray nodeChildens = new JsonArray();
-		o.add("operations", nodeChildens);
 
 		for (Operation operation : rootOperations) {
 			JsonObject childJSon = new JsonObject();
 			childJSon.addProperty("toString", operation.toString());
 			childJSon.addProperty("action", operation.getClass().getSimpleName());
-			childJSon.addProperty("position", operation.getPositionAsString());
-//			childJSon.addProperty("before_file", operation.getPositionAsString());
-//			childJSon.addProperty("before_line", operation.getPositionAsString());
-//			childJSon.addProperty("after_file", operation.getPositionAsString());
-//			childJSon.addProperty("after_line", operation.getPositionAsString());
+			String[] position = operation.getPositionAsString();
+			childJSon.addProperty("before_file", position[0]);
+			childJSon.addProperty("before_line", position[1]);
+			childJSon.addProperty("after_file", position[2]);
+			childJSon.addProperty("after_line", position[3]);
 
 			ITree node = operation.getAction().getNode();
 			final CtElement nodeElement = operation.getNode();
@@ -285,7 +283,6 @@ public class DiffImpl implements Diff {
 				childJSon.addProperty("nodeLabel", node.getLabel());
 			}
 			String kind = operation.getAction().getClass().getSimpleName() + ", \"" + nodeType + "\", \"" + node.getLabel()+ "\"";
-			childJSon.addProperty("position", operation.getPositionAsString());
 
 			if (operation instanceof UpdateOperation) {
 				// adding the new value for update
@@ -301,8 +298,8 @@ public class DiffImpl implements Diff {
 			nodeChildens.add(childJSon);
 		}
 
-		Gson gson = new GsonBuilder().setPrettyPrinting().create();
-		return gson.toJson(o) + "\n";
+//		Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		return nodeChildens;
 	}
 
 	public TreeContext getContext() {

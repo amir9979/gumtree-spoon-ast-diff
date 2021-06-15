@@ -2,12 +2,18 @@ package gumtree.spoon;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.Writer;
 import java.util.Map;
 
+import add.entities.Feature;
 import add.entities.FeatureList;
 import add.features.detector.repairactions.RepairActionDetector;
 import add.features.detector.repairpatterns.RepairPatternDetector;
 import add.main.Config;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import gumtree.spoon.builder.SpoonGumTreeBuilder;
 import gumtree.spoon.diff.Diff;
 import gumtree.spoon.diff.DiffImpl;
@@ -201,8 +207,8 @@ public class AstComparator {
 
 
 	public static void main(String[] args) throws Exception {
-		if (args.length != 2) {
-			System.out.println("Usage: DiffSpoon <file_1>  <file_2>");
+		if (args.length != 3) {
+			System.out.println("Usage: DiffSpoon <file_1>  <file_2> <out_file>");
 			return;
 		}
 
@@ -224,7 +230,16 @@ public class AstComparator {
 		FeatureList features = new FeatureList(new Config());
 		features.add(new RepairPatternDetector(new Config(), result).analyze());
 		features.add(new RepairActionDetector(new Config(), result).analyze());
-		System.out.println(features.toString());
-		System.out.println(result.toJson());
+		JsonObject res = new JsonObject();
+		for (Feature feature : features.getFeatureList()) {
+			for (String featureName : feature.getFeatureNames()) {
+				res.addProperty(featureName, feature.getFeatureCounter(featureName));
+			}
+		}
+		res.add("operations", result.toJson());
+		try (Writer writer = new FileWriter(args[2])) {
+			Gson gson = new GsonBuilder().create();
+			gson.toJson(res, writer);
+		}
 	}
 }

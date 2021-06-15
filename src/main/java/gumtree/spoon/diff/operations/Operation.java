@@ -74,11 +74,11 @@ public abstract class Operation<T extends Action> {
 		return stringBuilder.toString();
 	}
 
-	public String getPositionAsString() {
+	public String[] getPositionAsString() {
 		return getPositionAsString(action, node);
 	}
 
-	private String getPositionAsString(Action action, CtElement element) {
+	private String[] getPositionAsString(Action action, CtElement element) {
 		CtElement parent = element;
 		while (parent.getParent() != null && !(parent.getParent() instanceof CtPackage)) {
 			parent = parent.getParent();
@@ -114,7 +114,7 @@ public abstract class Operation<T extends Action> {
 				to_line = "" + elementDest.getPosition().getLine();
 			}
 		}
-		return position;
+		return new String[]{from_name, from_line, to_name, to_line};
 	}
 
 	private String partialElementPrint(CtElement element) {

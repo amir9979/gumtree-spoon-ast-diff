@@ -4,6 +4,8 @@ import java.util.List;
 
 import com.github.gumtreediff.matchers.MappingStore;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import gumtree.spoon.diff.operations.Operation;
 import gumtree.spoon.diff.operations.OperationKind;
 import spoon.reflect.declaration.CtElement;
@@ -80,5 +82,5 @@ public interface Diff {
 	/**
 	 * Convert to Json
 	 */
-	public String toJson();
+	public JsonArray toJson();
 	}

@@ -4,7 +4,10 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.json.JSONObject;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 import add.main.Config;
 import add.main.Constants;
@@ -79,24 +82,23 @@ public abstract class Feature {
 		return output.toString();
 	}
 
-	public JSONObject toJson() {
-		JSONObject jsonObjectFeatures = new JSONObject();
+	public JsonObject toJson() {
+		JsonObject JsonObjectFeatures = new JsonObject();
 		for (String featureName : getFeatureNames()) {
-			int counter = getFeatureCounter(featureName);
-			jsonObjectFeatures.put(featureName, counter);
+			JsonObjectFeatures.addProperty(featureName, getFeatureCounter(featureName));
 		}
-		JSONObject json = new JSONObject();
-		if (config != null) {
-			json.put("commitId", this.config.getCurrentCommit());
-		}
-		json.put(Character.toLowerCase(this.getClass().getSimpleName().charAt(0))
-				+ this.getClass().getSimpleName().substring(1), jsonObjectFeatures);
-		return json;
+//		JsonArray json = new JsonArray();
+//		if (config != null) {
+//			json.addProperty("commitId", this.config.getCurrentCommit());
+//		}
+//		json.addProperty(Character.toLowerCase(this.getClass().getSimpleName().charAt(0)) + this.getClass().getSimpleName().substring(1), JsonObjectFeatures);
+		return JsonObjectFeatures;
 	}
 
 	@Override
 	public String toString() {
-		return toJson().toString(2);
+		Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		return gson.toJson(toJson()) + "\n";
 	}
 
 }

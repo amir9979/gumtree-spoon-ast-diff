@@ -3,7 +3,7 @@ package add.entities;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.json.JSONObject;
+import com.google.gson.*;
 
 import add.main.Config;
 import add.main.Constants;
@@ -41,21 +41,24 @@ public class FeatureList {
         return output.toString();
     }
 
-    public JSONObject toJson() {
-        JSONObject mergedJSON = new JSONObject();
-        for (int i = 0; i < featureList.size(); i++) {
-            Feature feature = featureList.get(i);
-            JSONObject jsonObject = feature.toJson();
-            for (String key : JSONObject.getNames(jsonObject)) {
-                mergedJSON.put(key, jsonObject.get(key));
+    public List<Feature> getFeatureList(){
+        return featureList;
+    }
+
+    public JsonObject toJson() {
+        JsonObject o = new JsonObject();
+        for (Feature feature : featureList) {
+            for (String featureName : feature.getFeatureNames()) {
+                o.addProperty(featureName, feature.getFeatureCounter(featureName));
             }
         }
-        return mergedJSON;
+        return o;
     }
 
     @Override
     public String toString() {
-        return toJson().toString(2);
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        return gson.toJson(toJson()) + "\n";
     }
 
 }
