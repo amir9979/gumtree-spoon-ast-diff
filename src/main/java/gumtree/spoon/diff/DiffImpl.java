@@ -271,6 +271,10 @@ public class DiffImpl implements Diff {
 			childJSon.addProperty("toString", operation.toString());
 			childJSon.addProperty("action", operation.getClass().getSimpleName());
 			childJSon.addProperty("position", operation.getPositionAsString());
+//			childJSon.addProperty("before_file", operation.getPositionAsString());
+//			childJSon.addProperty("before_line", operation.getPositionAsString());
+//			childJSon.addProperty("after_file", operation.getPositionAsString());
+//			childJSon.addProperty("after_line", operation.getPositionAsString());
 
 			ITree node = operation.getAction().getNode();
 			final CtElement nodeElement = operation.getNode();

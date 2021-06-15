@@ -84,21 +84,34 @@ public abstract class Operation<T extends Action> {
 			parent = parent.getParent();
 		}
 		String position = "";
+		String from_name = "";
+		String from_line = "";
+		String to_name = "";
+		String to_line = "";
 		if (parent instanceof CtType) {
 			position += ((CtType) parent).getQualifiedName();
+			from_name = ((CtType) parent).getQualifiedName();
+			to_name = ((CtType) parent).getQualifiedName();
+
 		}
 		if (element.getPosition() != null && !(element.getPosition() instanceof NoSourcePosition)) {
 			position += ":" + element.getPosition().getLine();
+			from_line = "" + element.getPosition().getLine();
+			to_line = "" + element.getPosition().getLine();
 		}
 		if (action instanceof Move) {
 			CtElement elementDest = (CtElement) action.getNode().getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT_DEST);
 			position = " from " + element.getParent(CtClass.class).getQualifiedName();
+			from_name = element.getParent(CtClass.class).getQualifiedName();
 			if (element.getPosition() != null && !(element.getPosition() instanceof NoSourcePosition)) {
 				position += ":" + element.getPosition().getLine();
+				from_line = "" + element.getPosition().getLine();
 			}
 			position += " to " + elementDest.getParent(CtClass.class).getQualifiedName();
+			to_name = elementDest.getParent(CtClass.class).getQualifiedName();
 			if (elementDest.getPosition() != null && !(elementDest.getPosition() instanceof NoSourcePosition)) {
 				position += ":" + elementDest.getPosition().getLine();
+				to_line = "" + elementDest.getPosition().getLine();
 			}
 		}
 		return position;
