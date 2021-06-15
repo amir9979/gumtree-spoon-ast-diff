@@ -4,6 +4,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Map;
 
+import add.entities.FeatureList;
+import add.features.detector.repairactions.RepairActionDetector;
+import add.features.detector.repairpatterns.RepairPatternDetector;
+import add.main.Config;
 import gumtree.spoon.builder.SpoonGumTreeBuilder;
 import gumtree.spoon.diff.Diff;
 import gumtree.spoon.diff.DiffImpl;
@@ -28,6 +32,8 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.api.CheckoutCommand;
 import org.eclipse.jgit.api.Git;
+import com.google.gson.JsonObject;
+
 
 /**
  * Computes the differences between two CtElements.
@@ -215,6 +221,10 @@ public class AstComparator {
 //				}}
 
 		final Diff result = new AstComparator().compare(new File(args[0]), new File(args[1]));
+		FeatureList features = new FeatureList(new Config());
+		features.add(new RepairPatternDetector(new Config(), result).analyze());
+		features.add(new RepairActionDetector(new Config(), result).analyze());
+		System.out.println(features.toString());
 		System.out.println(result.toJson());
 	}
 }
