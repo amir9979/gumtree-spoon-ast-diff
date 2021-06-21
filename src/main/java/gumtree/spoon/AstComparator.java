@@ -5,6 +5,8 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.Writer;
 import java.util.Map;
+import java.io.*;
+import java.net.*;
 
 import add.entities.Feature;
 import add.entities.FeatureList;
@@ -207,25 +209,40 @@ public class AstComparator {
 
 
 	public static void main(String[] args) throws Exception {
+		ServerSocket ss = new ServerSocket(12345);
+		while (true) {
+		Socket s = ss.accept();
+		System.out.println("Receive new connection: " + s.getInetAddress());
+		BufferedReader reader = new BufferedReader(new InputStreamReader(s.getInputStream()));
+		PrintWriter writer = new PrintWriter(s.getOutputStream(), true);
+		String str = "";
+		str = reader.readLine();
+		System.out.println("client says: " + str);
+		if(str == null) {
+			s.close();
+			continue;
+		}
+		if(str.equals("break")) {
+			s.close();
+			break;
+		}
+		String[] arguments = str.split(";", 3);
+		if (arguments.length != 3) {
+			break;
+		}
+		saveDiffMetrics(arguments);
+		writer.println("");
+		writer.flush();
+		s.close();
+	}
+	ss.close();
+	}
+
+	private static void saveDiffMetrics(String[] args) throws Exception {
 		if (args.length != 3) {
 			System.out.println("Usage: DiffSpoon <file_1>  <file_2> <out_file>");
 			return;
 		}
-
-//		try (Repository repo = openRepository(this.config.getBuggySourceDirectoryPath())) {
-//			for (RevCommit currentCommit : getCommits(repo, this.config.getStartCommit(), this.config.getEndCommit())) {
-//				try {
-//					ProcessBuilder pb = new ProcessBuilder("git", "show", currentCommit.getName()+":", currentCommit.getParent(0).getName());
-//					pb.directory(new File(this.config.getBuggySourceDirectoryPath()));
-//					pb.inheritIO();
-//					pb.redirectOutput(new File(this.config.getDiffPath()));
-//					Process p = pb.start();
-//					p.waitFor();
-//				} catch (Exception e) {
-//					e.printStackTrace();
-//				}
-//				}}
-
 		final Diff result = new AstComparator().compare(new File(args[0]), new File(args[1]));
 		FeatureList features = new FeatureList(new Config());
 		features.add(new RepairPatternDetector(new Config(), result).analyze());
