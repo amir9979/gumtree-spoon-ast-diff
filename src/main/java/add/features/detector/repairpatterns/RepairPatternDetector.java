@@ -28,9 +28,9 @@ public class RepairPatternDetector extends EditScriptBasedDetector {
 		List<Operation> operations = this.editScript.getRootOperations();
 
 		List<AbstractPatternDetector> detectors = new ArrayList<>();
-		detectors.add(new MissingNullCheckDetector(operations));
-		detectors.add(new WrapsWithDetector(operations));
-		detectors.add(new ConstantChangeDetector(operations));
+		detectors.add(new MissingNullCheckDetector(operations)); // V
+		detectors.add(new WrapsWithDetector(operations)); // X
+		detectors.add(new ConstantChangeDetector(operations)); // V
 		detectors.add(new ExpressionFixDetector(operations));
 		detectors.add(new WrongReferenceDetector(this.config, operations));
 

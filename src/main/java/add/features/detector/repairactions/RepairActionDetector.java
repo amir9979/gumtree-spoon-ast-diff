@@ -20,7 +20,7 @@ import java.util.List;
 
 public class RepairActionDetector extends EditScriptBasedDetector {
 
-    private RepairActions repairActions;
+    public RepairActions repairActions;
 
     public RepairActionDetector(Config config, Diff editScript) {
         super(config, editScript);
@@ -36,34 +36,42 @@ public class RepairActionDetector extends EditScriptBasedDetector {
     public RepairActions analyze() {
         for (int i = 0; i < editScript.getRootOperations().size(); i++) {
             Operation operation = editScript.getRootOperations().get(i);
-            CtElement srcNode = operation.getSrcNode();
-            if (operation instanceof InsertOperation || operation instanceof DeleteOperation) {
-                this.detectRepairActions(srcNode, operation instanceof DeleteOperation ?
-                        CtElementAnalyzer.ACTION_TYPE.DELETE : CtElementAnalyzer.ACTION_TYPE.ADD);
-                SpoonHelper.printInsertOrDeleteOperation(srcNode.getFactory().getEnvironment(), srcNode, operation);
-            } else {
-                CtElement dstNode = operation.getDstNode();
-                if (operation instanceof UpdateOperation) {
-                    this.detectRepairActionsInUpdate(srcNode, dstNode);
-                    SpoonHelper.printUpdateOperation(srcNode, dstNode, (UpdateOperation) operation);
-                } else {
-                    if (srcNode instanceof CtInvocation) {
-                        List<CtStatement> statements = srcNode.getElements(new LineFilter());
-                        if (statements.size() == 1 && statements.get(0).equals(srcNode)) {
-                            this.repairActions.incrementFeatureCounter("mcMove");
-                        }
-                    } else {
-                        if (srcNode.getRoleInParent() == CtRole.ARGUMENT && dstNode.getRoleInParent() == CtRole.ARGUMENT &&
-                                (srcNode.getParent() instanceof CtConstructorCall || srcNode.getParent() instanceof CtInvocation)
-                                && (dstNode.getParent() instanceof CtConstructorCall || dstNode.getParent() instanceof CtInvocation)) {
+            analyzeOperation(operation);
+        }
+        return this.repairActions;
+    }
 
-                            this.repairActions.incrementFeatureCounter("mcParSwap");
-                        }
+    public void clearActions() {
+        this.repairActions = new RepairActions();
+    }
+
+    public void analyzeOperation(Operation operation) {
+        CtElement srcNode = operation.getSrcNode();
+        if (operation instanceof InsertOperation || operation instanceof DeleteOperation) {
+            this.detectRepairActions(srcNode, operation instanceof DeleteOperation ?
+                    CtElementAnalyzer.ACTION_TYPE.DELETE : CtElementAnalyzer.ACTION_TYPE.ADD);
+            SpoonHelper.printInsertOrDeleteOperation(srcNode.getFactory().getEnvironment(), srcNode, operation);
+        } else {
+            CtElement dstNode = operation.getDstNode();
+            if (operation instanceof UpdateOperation) {
+                this.detectRepairActionsInUpdate(srcNode, dstNode);
+                SpoonHelper.printUpdateOperation(srcNode, dstNode, (UpdateOperation) operation);
+            } else {
+                if (srcNode instanceof CtInvocation) {
+                    List<CtStatement> statements = srcNode.getElements(new LineFilter());
+                    if (statements.size() == 1 && statements.get(0).equals(srcNode)) {
+                        this.repairActions.incrementFeatureCounter("mcMove");
+                    }
+                } else {
+                    if (srcNode.getRoleInParent() == CtRole.ARGUMENT && dstNode.getRoleInParent() == CtRole.ARGUMENT &&
+                            (srcNode.getParent() instanceof CtConstructorCall || srcNode.getParent() instanceof CtInvocation)
+                            && (dstNode.getParent() instanceof CtConstructorCall || dstNode.getParent() instanceof CtInvocation)) {
+
+                        this.repairActions.incrementFeatureCounter("mcParSwap");
                     }
                 }
             }
         }
-        return this.repairActions;
     }
 
     private void detectRepairActions(CtElement e, CtElementAnalyzer.ACTION_TYPE actionType) {

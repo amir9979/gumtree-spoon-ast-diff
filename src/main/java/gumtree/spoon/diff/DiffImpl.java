@@ -7,6 +7,9 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import add.entities.RepairActions;
+import add.features.detector.repairactions.RepairActionDetector;
+import add.main.Config;
 import com.github.gumtreediff.actions.ActionGenerator;
 import com.github.gumtreediff.actions.model.Action;
 import com.github.gumtreediff.actions.model.Delete;
@@ -263,7 +266,7 @@ public class DiffImpl implements Diff {
 	@Override
 	public JsonArray toJson() {
 		JsonArray nodeChildens = new JsonArray();
-
+		RepairActionDetector d = new RepairActionDetector(new Config(), this);
 		for (Operation operation : rootOperations) {
 			JsonObject childJSon = new JsonObject();
 			childJSon.addProperty("toString", operation.toString());
@@ -294,6 +297,13 @@ public class DiffImpl implements Diff {
 			}
 
 			childJSon.addProperty("size", node.getDescendants().size());
+			d.analyzeOperation(operation);
+			RepairActions actions = d.repairActions;
+			for (String featureName : actions.getFeatureNames()) {
+				childJSon.addProperty(featureName, actions.getFeatureCounter(featureName));
+			}
+			d.clearActions();
+
 
 			nodeChildens.add(childJSon);
 		}

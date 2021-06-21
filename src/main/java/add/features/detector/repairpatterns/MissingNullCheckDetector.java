@@ -36,128 +36,132 @@ public class MissingNullCheckDetector extends AbstractPatternDetector {
 	@Override
 	public void detect(RepairPatterns repairPatterns) {
 		for (Operation operation : this.operations) {
-			if (operation instanceof InsertOperation) {
+			detectOperation(repairPatterns, operation);
+		}
+	}
 
-				CtElement srcNode = operation.getSrcNode();
+	public void detectOperation(RepairPatterns repairPatterns, Operation operation) {
+		if (operation instanceof InsertOperation) {
 
-				if (srcNode instanceof spoon.reflect.declaration.CtMethod)
-					continue;
+			CtElement srcNode = operation.getSrcNode();
 
-				SpoonHelper.printInsertOrDeleteOperation(srcNode.getFactory().getEnvironment(), srcNode, operation);
+			if (srcNode instanceof spoon.reflect.declaration.CtMethod)
+				return;
 
-				List<CtBinaryOperator> binaryOperatorList = srcNode.getElements(new NullCheckFilter());
-				for (CtBinaryOperator binaryOperator : binaryOperatorList) {
-					if (RepairPatternUtils.isNewBinaryOperator(binaryOperator)) {
-						if (RepairPatternUtils.isNewConditionInBinaryOperator(binaryOperator)) {
-							// LOGGER.debug("-New null check: " + binaryOperator.toString());
+			SpoonHelper.printInsertOrDeleteOperation(srcNode.getFactory().getEnvironment(), srcNode, operation);
 
-							final CtElement referenceExpression;
-							if (binaryOperator.getRightHandOperand().toString().equals("null")) {
-								referenceExpression = binaryOperator.getLeftHandOperand();
+			List<CtBinaryOperator> binaryOperatorList = srcNode.getElements(new NullCheckFilter());
+			for (CtBinaryOperator binaryOperator : binaryOperatorList) {
+				if (RepairPatternUtils.isNewBinaryOperator(binaryOperator)) {
+					if (RepairPatternUtils.isNewConditionInBinaryOperator(binaryOperator)) {
+						// LOGGER.debug("-New null check: " + binaryOperator.toString());
+
+						final CtElement referenceExpression;
+						if (binaryOperator.getRightHandOperand().toString().equals("null")) {
+							referenceExpression = binaryOperator.getLeftHandOperand();
+						} else {
+							referenceExpression = binaryOperator.getRightHandOperand();
+						}
+						// LOGGER.debug("-Reference expression: " + referenceExpression.toString());
+
+						boolean wasPatternFound = false;
+
+						List soldt = null;
+						List soldelse = null;
+
+						CtElement parent = binaryOperator.getParent(new LineFilter());
+
+						if (parent instanceof CtIf) {
+							if(RepairPatternUtils.isNewIf((CtIf) parent)) {
+								CtBlock thenBlock = ((CtIf) parent).getThenStatement();
+								CtBlock elseBlock = ((CtIf) parent).getElseStatement();
+
+							   if (thenBlock != null) {
+								  soldt = RepairPatternUtils.getIsThereOldStatementInStatementList(diff,
+										thenBlock.getStatements());
+								  if (!soldt.isEmpty())
+									 wasPatternFound = true;
+
+							   } // else
+							   if (elseBlock != null) {
+								  soldelse = RepairPatternUtils.getIsThereOldStatementInStatementList(diff,
+										elseBlock.getStatements());
+								  if (!soldelse.isEmpty())
+									 wasPatternFound = true;
+							   }
+							}
+						} else if (binaryOperator.getParent() instanceof CtConditional) {
+
+							CtConditional c = (CtConditional) binaryOperator.getParent();
+							CtElement thenExpr = c.getThenExpression();
+							CtElement elseExp = c.getElseExpression();
+
+							if (thenExpr != null) {
+								soldt = new ArrayList<>();
+								// If it's not new the THEN
+								if (thenExpr.getMetadata("new") == null) {
+								//	soldelse.add(thenExpr);
+									soldt.add(RepairPatternUtils.getElementInOld(diff, thenExpr));
+									wasPatternFound = true;
+								}
+							}
+							if (elseExp != null) {
+								soldelse = new ArrayList<>();
+								// If it's not new the ELSE
+								if (elseExp.getMetadata("new") == null) {
+								//	soldelse.add(elseExp);
+									soldt.add(RepairPatternUtils.getElementInOld(diff, elseExp));
+									wasPatternFound = true;
+								}
+							}
+						}
+
+						if (wasPatternFound) {
+
+							List<CtElement> susp = new ArrayList<>();
+							if (soldt != null)
+								susp.addAll(soldt);
+							if (soldelse != null)
+								susp.addAll(soldelse);
+
+							CtElement lineP = null;
+							ITree lineTree = null;
+							if (!susp.isEmpty()) {
+
+								lineP = MappingAnalysis.getParentLine(new LineFilter(), (CtElement) susp.get(0));
+								lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
+
 							} else {
-								referenceExpression = binaryOperator.getRightHandOperand();
-							}
-							// LOGGER.debug("-Reference expression: " + referenceExpression.toString());
 
-							boolean wasPatternFound = false;
+								// The next
+								InsertOperation operationIns = (InsertOperation) operation;
 
-							List soldt = null;
-							List soldelse = null;
+								List<ITree> treeInLeft = MappingAnalysis.getFollowStatementsInLeft(diff,
+										operationIns.getAction());
 
-							CtElement parent = binaryOperator.getParent(new LineFilter());
-
-							if (parent instanceof CtIf) {
-								if(RepairPatternUtils.isNewIf((CtIf) parent)) {
-								    CtBlock thenBlock = ((CtIf) parent).getThenStatement();
-								    CtBlock elseBlock = ((CtIf) parent).getElseStatement();
-
-								   if (thenBlock != null) {
-									  soldt = RepairPatternUtils.getIsThereOldStatementInStatementList(diff,
-											thenBlock.getStatements());
-									  if (!soldt.isEmpty())
-										 wasPatternFound = true;
-
-								   } // else
-								   if (elseBlock != null) {
-									  soldelse = RepairPatternUtils.getIsThereOldStatementInStatementList(diff,
-											elseBlock.getStatements());
-									  if (!soldelse.isEmpty())
-										 wasPatternFound = true;
-								   }
+								if (treeInLeft.isEmpty()) {
+									System.out.println(
+											"Problem!!!! Empty parent in " + MISS_NULL_CHECK_N.toLowerCase());
+									continue;
 								}
-							} else if (binaryOperator.getParent() instanceof CtConditional) {
-								
-								CtConditional c = (CtConditional) binaryOperator.getParent();
-								CtElement thenExpr = c.getThenExpression();
-								CtElement elseExp = c.getElseExpression();
 
-								if (thenExpr != null) {
-									soldt = new ArrayList<>();
-									// If it's not new the THEN
-									if (thenExpr.getMetadata("new") == null) {
-									//	soldelse.add(thenExpr);
-										soldt.add(RepairPatternUtils.getElementInOld(diff, thenExpr));
-										wasPatternFound = true;
-									}
+								for (ITree iTree : treeInLeft) {
+									susp.add((CtElement) iTree.getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT));
 								}
-								if (elseExp != null) {
-									soldelse = new ArrayList<>();
-									// If it's not new the ELSE
-									if (elseExp.getMetadata("new") == null) {
-									//	soldelse.add(elseExp);
-										soldt.add(RepairPatternUtils.getElementInOld(diff, elseExp));
-										wasPatternFound = true;
-									}
-								}
+
+								lineP = susp.get(0);
+							//	lineTree = treeInLeft.get(0);
+								lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
 							}
 
-							if (wasPatternFound) {
-
-								List<CtElement> susp = new ArrayList<>();
-								if (soldt != null)
-									susp.addAll(soldt);
-								if (soldelse != null)
-									susp.addAll(soldelse);
-
-								CtElement lineP = null;
-								ITree lineTree = null;
-								if (!susp.isEmpty()) {
-
-									lineP = MappingAnalysis.getParentLine(new LineFilter(), (CtElement) susp.get(0));
-									lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
-
-								} else {
-
-									// The next
-									InsertOperation operationIns = (InsertOperation) operation;
-
-									List<ITree> treeInLeft = MappingAnalysis.getFollowStatementsInLeft(diff,
-											operationIns.getAction());
-
-									if (treeInLeft.isEmpty()) {
-										System.out.println(
-												"Problem!!!! Empty parent in " + MISS_NULL_CHECK_N.toLowerCase());
-										continue;
-									}
-
-									for (ITree iTree : treeInLeft) {
-										susp.add((CtElement) iTree.getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT));
-									}
-
-									lineP = susp.get(0);
-								//	lineTree = treeInLeft.get(0);
-									lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
-								}
-
-								if (binaryOperator.getKind().equals(BinaryOperatorKind.EQ)) {
-									repairPatterns.incrementFeatureCounterInstance(MISS_NULL_CHECK_P,
-											new PatternInstance(MISS_NULL_CHECK_P, operation, parent, susp, lineP,
-													lineTree));
-								} else {
-									repairPatterns.incrementFeatureCounterInstance(MISS_NULL_CHECK_N,
-											new PatternInstance(MISS_NULL_CHECK_N, operation, parent, susp, lineP,
-													lineTree));
-								}
+							if (binaryOperator.getKind().equals(BinaryOperatorKind.EQ)) {
+								repairPatterns.incrementFeatureCounterInstance(MISS_NULL_CHECK_P,
+										new PatternInstance(MISS_NULL_CHECK_P, operation, parent, susp, lineP,
+												lineTree));
+							} else {
+								repairPatterns.incrementFeatureCounterInstance(MISS_NULL_CHECK_N,
+										new PatternInstance(MISS_NULL_CHECK_N, operation, parent, susp, lineP,
+												lineTree));
 							}
 						}
 					}

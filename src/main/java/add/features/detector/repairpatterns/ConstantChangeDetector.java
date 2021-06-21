@@ -31,47 +31,51 @@ public class ConstantChangeDetector extends AbstractPatternDetector {
 	public void detect(RepairPatterns repairPatterns) {
 		for (int i = 0; i < operations.size(); i++) {
 			Operation operation = operations.get(i);
-			if ((operation instanceof UpdateOperation)) {
-				CtElement srcNode = operation.getSrcNode();
-				if (operation.getSrcNode().getParent().getMetadata("new") != null
-						|| operation.getSrcNode().getParent().getMetadata("isMoved") != null) {
-					continue;
-				}
-				CtElement parent = MappingAnalysis.getParentLine(new LineFilter(), srcNode);
-				ITree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(parent);
+			detectOperation(repairPatterns, operation);
+		}
+	}
 
-				if (srcNode instanceof CtLiteral) {
-					repairPatterns.incrementFeatureCounterInstance(CONST_CHANGE,
-							new PatternInstance(CONST_CHANGE, operation, operation.getDstNode(), srcNode, parent,
-									lineTree, new PropertyPair("type", "literal")));
-				}
+	public void detectOperation(RepairPatterns repairPatterns, Operation operation) {
+		if ((operation instanceof UpdateOperation)) {
+			CtElement srcNode = operation.getSrcNode();
+			if (operation.getSrcNode().getParent().getMetadata("new") != null
+					|| operation.getSrcNode().getParent().getMetadata("isMoved") != null) {
+				return;
+			}
+			CtElement parent = MappingAnalysis.getParentLine(new LineFilter(), srcNode);
+			ITree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(parent);
 
-			} else {
-				if (operation instanceof DeleteOperation && operation.getSrcNode() instanceof CtLiteral) {
-					CtLiteral ctLiteral = (CtLiteral) operation.getSrcNode();
-					for (int j = 0; j < operations.size(); j++) {
-						Operation operation2Insert = operations.get(j);
-						if (operation2Insert instanceof InsertOperation) {
-							CtElement ctElement = operation2Insert.getSrcNode();
-							boolean isConstantVariable = false;
-							if (ctElement instanceof CtVariableAccess || ctElement instanceof CtArrayAccess 
-									|| (ctElement instanceof CtTypeAccess && !RepairPatternUtils.isThisAccess((CtTypeAccess) ctElement)
-											&& RepairPatternUtils.isConstantTypeAccess((CtTypeAccess) ctElement))) {
-								isConstantVariable = true;
-							}
-							if (((InsertOperation) operation2Insert).getParent() == ctLiteral.getParent()
-									&& isConstantVariable) {
-								CtElement parent = MappingAnalysis.getParentLine(new LineFilter(), ctLiteral);
-								ITree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(parent);
+			if (srcNode instanceof CtLiteral) {
+				repairPatterns.incrementFeatureCounterInstance(CONST_CHANGE,
+						new PatternInstance(CONST_CHANGE, operation, operation.getDstNode(), srcNode, parent,
+								lineTree, new PropertyPair("type", "literal")));
+			}
 
-								repairPatterns.incrementFeatureCounterInstance(CONST_CHANGE,
-										new PatternInstance(CONST_CHANGE, operation2Insert,
-												operation2Insert.getSrcNode(), ctLiteral, parent, lineTree,
-												new PropertyPair("type", "literal_by_varaccess")));
-							}
+		} else {
+			if (operation instanceof DeleteOperation && operation.getSrcNode() instanceof CtLiteral) {
+				CtLiteral ctLiteral = (CtLiteral) operation.getSrcNode();
+				for (int j = 0; j < operations.size(); j++) {
+					Operation operation2Insert = operations.get(j);
+					if (operation2Insert instanceof InsertOperation) {
+						CtElement ctElement = operation2Insert.getSrcNode();
+						boolean isConstantVariable = false;
+						if (ctElement instanceof CtVariableAccess || ctElement instanceof CtArrayAccess
+								|| (ctElement instanceof CtTypeAccess && !RepairPatternUtils.isThisAccess((CtTypeAccess) ctElement)
+										&& RepairPatternUtils.isConstantTypeAccess((CtTypeAccess) ctElement))) {
+							isConstantVariable = true;
+						}
+						if (((InsertOperation) operation2Insert).getParent() == ctLiteral.getParent()
+								&& isConstantVariable) {
+							CtElement parent = MappingAnalysis.getParentLine(new LineFilter(), ctLiteral);
+							ITree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(parent);
+
+							repairPatterns.incrementFeatureCounterInstance(CONST_CHANGE,
+									new PatternInstance(CONST_CHANGE, operation2Insert,
+											operation2Insert.getSrcNode(), ctLiteral, parent, lineTree,
+											new PropertyPair("type", "literal_by_varaccess")));
 						}
 					}
-				}	
+				}
 			}
 		}
 	}
