@@ -1,5 +1,7 @@
 package gumtree.spoon.diff;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -8,6 +10,7 @@ import java.util.List;
 
 import org.junit.Test;
 
+import gumtree.spoon.builder.CtVirtualElement;
 import gumtree.spoon.AstComparator;
 import gumtree.spoon.diff.operations.Operation;
 import gumtree.spoon.diff.operations.OperationKind;
@@ -170,7 +173,7 @@ public class DiffTest {
 		CtClass c2b = Launcher.parseClass("class BehaviorCall implements Call {\n"
 				+ "final AtomicReference failureRef = new AtomicReference<>();\n"
 				+ "final CountDownLatch latch = new CountDownLatch(1);\n" + "\n" + " enqueue(new Callback<T>() {\n"
-				+ "@override public void onResponse(Response response) {\n"
+				+ "@Override public void onResponse(Response<T> response) {\n"
 
 				// Added
 				+ "System.out.println();"
@@ -197,4 +200,126 @@ public class DiffTest {
 
 	}
 
+	@Test
+	public void test_diffOfGenericTypeReference_builtInTypeToBuiltInType() throws Exception {
+		File left = new File("src/test/resources/examples/diffOfGenericTypeReferences/builtInTypeToBuiltInType/left.java");
+		File right = new File("src/test/resources/examples/diffOfGenericTypeReferences/builtInTypeToBuiltInType/right.java");
+
+		Diff diff = new AstComparator().compare(left, right);
+		assertEquals(1, diff.getRootOperations().size());
+		assertTrue(diff.containsOperation(OperationKind.Update, "TYPE_ARGUMENT"));
+	}
+
+	@Test
+	public void test_diffOfGenericTypeReference_builtInTypeToTypeParameter() throws Exception {
+		File left = new File("src/test/resources/examples/diffOfGenericTypeReferences/builtInTypeToTypeParameter/left.java");
+		File right = new File("src/test/resources/examples/diffOfGenericTypeReferences/builtInTypeToTypeParameter/right.java");
+
+		Diff diff = new AstComparator().compare(left, right);
+		assertEquals(1, diff.getRootOperations().size());
+		assertTrue(diff.containsOperation(OperationKind.Update, "TYPE_ARGUMENT"));
+	}
+
+	@Test
+	public void test_diffOfGenericTypeReference_typeParameterToBuiltInType() throws Exception {
+		File left = new File("src/test/resources/examples/diffOfGenericTypeReferences/typeParameterToBuiltInType/left.java");
+		File right = new File("src/test/resources/examples/diffOfGenericTypeReferences/typeParameterToBuiltInType/right.java");
+
+		Diff diff = new AstComparator().compare(left, right);
+		assertEquals(1, diff.getRootOperations().size());
+		assertTrue(diff.containsOperation(OperationKind.Update, "TYPE_ARGUMENT"));
+	}
+
+	@Test
+	public void test_diffOfAnnotations() throws Exception {
+		File left = new File("src/test/resources/examples/annotations/left.java");
+		File right = new File("src/test/resources/examples/annotations/right.java");
+
+		Diff diff = new AstComparator().compare(left, right);
+
+		assertEquals(1, diff.getRootOperations().size());
+		assertTrue(diff.containsOperation(OperationKind.Update, "Annotation"));
+	}
+
+	@Test
+	public void test_diffOfGenericTypeReference_multipleNesting() throws Exception {
+		File left = new File("src/test/resources/examples/diffOfGenericTypeReferences/multipleNesting/left.java");
+		File right = new File("src/test/resources/examples/diffOfGenericTypeReferences/multipleNesting/right.java");
+
+		Diff diff = new AstComparator().compare(left, right);
+
+		assertEquals(3, diff.getRootOperations().size());
+		assertTrue(diff.containsOperation(OperationKind.Update, "TYPE_ARGUMENT", "A"));
+		assertTrue(diff.containsOperation(OperationKind.Move, "TYPE_ARGUMENT"));
+		assertTrue(diff.containsOperation(OperationKind.Insert, "TYPE_ARGUMENT"));
+	}
+
+	@Test
+	public void test_diffOfSuperInterfaces_class() throws Exception {
+		File left = new File("src/test/resources/examples/superInterfaces/class/left.java");
+		File right = new File("src/test/resources/examples/superInterfaces/class/right.java");
+
+		Diff diff = new AstComparator().compare(left, right);
+
+		assertTrue(diff.containsOperation(OperationKind.Insert, "INTERFACE", "A"));
+		assertTrue(diff.containsOperation(OperationKind.Insert, "INTERFACE", "D"));
+		assertTrue(diff.containsOperation(OperationKind.Insert, "TYPE_ARGUMENT", "T"));
+		// outer list is inserted
+		assertTrue(diff.containsOperation(OperationKind.Insert, "TYPE_ARGUMENT", "java.util.List"));
+		// initial list is nested inside the above inserted list
+		assertTrue(diff.containsOperation(OperationKind.Move, "TYPE_ARGUMENT", "java.util.List"));
+
+	}
+
+	@Test
+	public void test_diffOfSuperInterfaces_interface() throws Exception {
+		File left = new File("src/test/resources/examples/superInterfaces/interface/left.java");
+		File right = new File("src/test/resources/examples/superInterfaces/interface/right.java");
+
+		Diff diff = new AstComparator().compare(left, right);
+
+		assertTrue(diff.containsOperation(OperationKind.Delete, "INTERFACE", "A"));
+		assertTrue(diff.containsOperation(OperationKind.Insert, "INTERFACE", "D"));
+		assertTrue(diff.containsOperation(OperationKind.Insert, "TYPE_ARGUMENT", "T"));
+		// outer list is inserted
+		assertTrue(diff.containsOperation(OperationKind.Insert, "TYPE_ARGUMENT", "java.util.List"));
+		// initial list is nested inside the above inserted list
+		assertTrue(diff.containsOperation(OperationKind.Move, "TYPE_ARGUMENT", "java.util.List"));
+	}
+
+	@Test
+	public void test_diffOfSuperInterfaces_insertionOfRootNodeOfInterface() throws Exception {
+		File left = new File("src/test/resources/examples/superInterfaces/insertion/left.java");
+		File right = new File("src/test/resources/examples/superInterfaces/insertion/right.java");
+
+		Diff diff = new AstComparator().compare(left, right);
+
+		// assert that only the root of super interfaces is inserted
+		assertEquals(1, diff.getRootOperations().size());
+		assertTrue(diff.containsOperation(OperationKind.Insert, "SUPER_INTERFACES"));
+
+		// verify children of the inserted root node
+		CtVirtualElement superInterfaceRoot = (CtVirtualElement) diff.getRootOperations().get(0).getSrcNode();
+		assertArrayEquals(new String[]{"A", "B"}, superInterfaceRoot.getChildren().stream().map(Object::toString).toArray());
+	}
+
+	@Test
+	public void test_diffOfThrownTypes_insertionOfRootNodeOfThrowable() throws Exception {
+		File left = new File("src/test/resources/examples/thrownTypes/left.java");
+		File right = new File("src/test/resources/examples/thrownTypes/right.java");
+
+		Diff diff = new AstComparator().compare(left, right);
+
+		// assert that only the root of throwables is inserted
+		assertEquals(1, diff.getRootOperations().size());
+		assertTrue(diff.containsOperation(OperationKind.Insert, "THROWN_TYPES"));
+
+		// verify children of the inserted root node
+		CtVirtualElement thrownTypeRoot = (CtVirtualElement) diff.getRootOperations().get(0).getSrcNode();
+		assertNotNull(thrownTypeRoot);
+		assertArrayEquals(new String[] {
+				"java.lang.ClassNotFoundException",
+				"java.lang.ClassCastException"
+		}, thrownTypeRoot.getChildren().stream().map(Object::toString).toArray());
+	}
 }

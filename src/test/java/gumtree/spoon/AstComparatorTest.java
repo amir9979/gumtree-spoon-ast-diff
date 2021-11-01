@@ -1526,7 +1526,7 @@ public class AstComparatorTest {
 		result.debugInformation();
 
 		assertEquals(1, actions.size());
-		assertTrue(result.containsOperation(OperationKind.Insert, "THROWS", "java.lang.Exception"));
+		assertTrue(result.containsOperation(OperationKind.Insert, "THROWN_TYPES"));
 	}
 
 	@Test
@@ -1541,7 +1541,7 @@ public class AstComparatorTest {
 		CtClass c2 = Launcher.parseClass("class BehaviorCall implements Call {\n"
 				+ "final AtomicReference failureRef = new AtomicReference<>();\n"
 				+ "final CountDownLatch latch = new CountDownLatch(1);\n" + "enqueue(new Callback() {\n"
-				+ "@override public void onResponse(Call call, Response response) {\n" + "responseRef.set(response);\n"
+				+ "@Override public void onResponse(Call call, Response<T> response) {\n" + "responseRef.set(response);\n"
 				+ "latch.countDown();\n" + "}\n" + "}\n" + ")\n" + "}");
 
 		AstComparator diff = new AstComparator();
@@ -1550,10 +1550,9 @@ public class AstComparatorTest {
 		List<Operation> actions = result.getRootOperations();
 		result.debugInformation();
 
-		assertEquals(1, actions.size());
+		assertEquals(2, actions.size());
+		assertTrue(result.containsOperation(OperationKind.Delete, "TYPE_ARGUMENT", "T"));
 		assertTrue(result.containsOperation(OperationKind.Insert, "Parameter", "call"));
-		// assertTrue(result.containsOperation(OperationKind.Update, "SUPER_TYPE",
-		// "Callback<T>"));
 	}
 
 	@Test
@@ -1733,7 +1732,7 @@ public class AstComparatorTest {
 				+ "final AtomicReference failureRef = new AtomicReference<>();\n"
 				+ "final CountDownLatch latch = new CountDownLatch(1);\n" + "enqueue(new Callback() {\n"
 				// Here the difference
-				+ "@override public void onResponse(Call call, Response response) {\n" + "responseRef.set(response);\n"
+				+ "@Override public void onResponse(Call call, Response<T> response) {\n" + "responseRef.set(response);\n"
 				+ "latch.countDown();\n" + "}\n" + "}\n" + ")\n" + "}");
 
 		AstComparator diff = new AstComparator();
@@ -1742,11 +1741,9 @@ public class AstComparatorTest {
 		List<Operation> actions = resulta.getRootOperations();
 		resulta.debugInformation();
 
-		assertEquals(1, actions.size());
-
+		assertEquals(2, actions.size());
+		assertTrue(resulta.containsOperation(OperationKind.Delete, "TYPE_ARGUMENT", "T"));
 		assertTrue(resulta.containsOperation(OperationKind.Insert, "Parameter", "call"));
-		// assertTrue(resulta.containsOperation(OperationKind.Update, "SUPER_TYPE",
-		// "Callback<T>"));
 
 		DiffImpl idiff = (DiffImpl) resulta;
 
@@ -1786,7 +1783,7 @@ public class AstComparatorTest {
 		result.debugInformation();
 
 		assertEquals(1, actions.size());
-		assertTrue(result.containsOperation(OperationKind.Update, "SUPER_TYPE", "SuperClass<One>"));
+		assertTrue(result.containsOperation(OperationKind.Update, "TYPE_ARGUMENT", "One"));
 	}
 
 	@Test
@@ -1801,7 +1798,7 @@ public class AstComparatorTest {
 		result.debugInformation();
 
 		assertEquals(1, actions.size());
-		assertTrue(result.containsOperation(OperationKind.Update, "SUPER_TYPE", "SuperClass"));
+		assertTrue(result.containsOperation(OperationKind.Insert, "TYPE_ARGUMENT", "One"));
 	}
 
 	@Test
@@ -2052,5 +2049,4 @@ public class AstComparatorTest {
 		assertEquals(deleteOpt.get().getNode().toString(), moveOpt.get().getNode().toString());
 
 	}
-
 }
