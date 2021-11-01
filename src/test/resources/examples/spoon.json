@@ -8,6 +8,27 @@
       "children": [
         {
           "label": "",
+          "type": "SUPER_INTERFACES",
+          "children": [
+            {
+              "label": "org.gjt.sp.jedit.EBComponent",
+              "type": "INTERFACE",
+              "children": []
+            },
+            {
+              "label": "QuickNotepadActions",
+              "type": "INTERFACE",
+              "children": []
+            },
+            {
+              "label": "org.gjt.sp.jedit.gui.DefaultFocusComponent",
+              "type": "INTERFACE",
+              "children": []
+            }
+          ]
+        },
+        {
+          "label": "",
           "type": "Modifiers_Class",
           "children": [
             {
@@ -18,13 +39,19 @@
           ]
         },
         {
-          "label": "",
-          "type": "TypeReference",
+          "label": "javax.swing.JPanel",
+          "type": "SUPER_TYPE",
           "children": [
             {
-              "label": "javax.swing.JPanel",
-              "type": "SUPER_TYPE",
-              "children": []
+              "label": "",
+              "type": "SUPER_INTERFACES",
+              "children": [
+                {
+                  "label": "javax.accessibility.Accessible",
+                  "type": "INTERFACE",
+                  "children": []
+                }
+              ]
             }
           ]
         },

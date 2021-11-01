@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
@@ -31,6 +32,7 @@ import spoon.compiler.SpoonResourceHelper;
 import spoon.reflect.code.CtStatement;
 import spoon.reflect.cu.SourcePosition;
 import spoon.reflect.cu.position.NoSourcePosition;
+import spoon.reflect.declaration.CtClass;
 import spoon.reflect.declaration.CtElement;
 import spoon.reflect.declaration.CtMethod;
 import spoon.reflect.declaration.CtType;
@@ -510,5 +512,73 @@ public class TreeTest {
 		assertTrue(position.getLine() > 0);
 		assertEquals(3, position.getLine());
 
+	}
+
+	@Test
+	public void test_getTree_labelExistsForAnnotations() {
+		String codeWithAnnotation = "class A { @Override public boolean equals(Object obj) { return false; }";
+
+		AstComparator comparator = new AstComparator();
+		CtType<?> spoonType = comparator.getCtType(codeWithAnnotation);
+
+		final SpoonGumTreeBuilder scanner = new SpoonGumTreeBuilder();
+		ITree root = scanner.getTree(spoonType);
+
+		ITree annotationNode = root.getChild(0).getChild(0).getChild(2);
+		assertEquals("@java.lang.Override", annotationNode.getLabel());
+	}
+
+	@Test
+	public void test_nestingLevelOfSuperType() {
+		CtClass<?> spoonClass = Launcher.parseClass("class Main extends SuperClass");
+		ITree root = new SpoonGumTreeBuilder().getTree(spoonClass);
+		ITree klass = root.getChild(0);
+		ITree superClass = klass.getChild(0);
+
+		assertEquals("SuperClass", superClass.getLabel());
+		assertEquals(superClass.getDepth(), klass.getDepth()+1);
+		assertEquals(0, superClass.getDescendants().size());
+	}
+
+	@Test
+	public void test_levelsOfNestingOfTypeArguments() throws Exception{
+		File nestedList = new File("src/test/resources/examples/diffOfGenericTypeReferences/multipleNesting/right.java");
+
+		AstComparator comparator = new AstComparator();
+		SpoonGumTreeBuilder scanner = new SpoonGumTreeBuilder();
+		ITree root = scanner.getTree(comparator.getCtType(nestedList));
+		String listLabel = "java.util.List";
+		String stringLabel = "java.lang.String";
+
+		ITree field = root.getChild(0).getChild(3);
+		List<String> childLabels = field.getDescendants().stream().map(ITree::getLabel).collect(Collectors.toList());
+		long listLabelsCount = childLabels.stream().filter(listLabel::equals).count();
+		long stringLabelsCount = childLabels.stream().filter(stringLabel::equals).count();
+
+		assertEquals("Not enough List containers", 4, listLabelsCount);
+		assertEquals("Not enough String type arguments", 1, stringLabelsCount);
+		assertEquals("There should only be list and string labels", childLabels.size(), listLabelsCount + stringLabelsCount);
+	}
+
+	@Test
+	public void test_superInterfacesShouldBeDescendantsOfClassNode() {
+		CtClass<?> spoonClass = Launcher.parseClass("class Example implements A, B, C { }");
+		ITree root = new SpoonGumTreeBuilder().getTree(spoonClass);
+		ITree superInterfaces = root.getChild(0).getChild(0);
+
+		assertEquals(3, superInterfaces.getDescendants().size());
+	}
+
+	@Test
+	public void test_nestedReturnTypeOfMethodShouldGetParsed() throws Exception {
+		File file = new File("src/test/resources/examples/NestedReturnType.java");
+		AstComparator comparator = new AstComparator();
+		SpoonGumTreeBuilder scanner = new SpoonGumTreeBuilder();
+		ITree root = scanner.getTree(comparator.getCtType(file));
+		ITree method = root.getDescendants().stream().filter(iTree -> iTree.getLabel().equals("getIntegers")).findFirst().get();
+
+		ITree returnType = method.getChild(0);
+		assertEquals(1, returnType.getDescendants().size());
+		assertEquals("java.lang.Integer", returnType.getChild(0).getLabel());
 	}
 }

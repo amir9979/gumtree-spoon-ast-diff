@@ -1,10 +1,14 @@
 package gumtree.spoon.diff.support;
 
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import gumtree.spoon.builder.CtVirtualElement;
+import gumtree.spoon.builder.CtWrapper;
 import org.junit.Test;
 
 import com.github.gumtreediff.tree.ITree;
@@ -17,6 +21,13 @@ import gumtree.spoon.diff.operations.InsertOperation;
 import gumtree.spoon.diff.operations.Operation;
 import gumtree.spoon.diff.operations.UpdateOperation;
 import spoon.reflect.declaration.CtMethod;
+import spoon.reflect.declaration.ModifierKind;
+import spoon.reflect.path.CtRole;
+import spoon.reflect.reference.CtTypeReference;
+
+import java.io.File;
+import java.util.HashSet;
+import java.util.Set;
 
 public class SpoonSupportTest {
 
@@ -162,4 +173,60 @@ public class SpoonSupportTest {
 
 	}
 
+	@Test
+	public void testRoleOfFinalInParent() throws Exception {
+		File fl = new File("src/test/resources/examples/roleInParent/final/left.java");
+		File fr = new File("src/test/resources/examples/roleInParent/final/right.java");
+
+		Diff diff = new AstComparator().compare(fl, fr);
+
+		CtWrapper<?> finalNode = (CtWrapper<?>) diff.getRootOperations().get(0).getSrcNode();
+
+		assertEquals(CtRole.MODIFIER, finalNode.getRoleInParent());
+	}
+
+	@Test
+	public void testRoleOfModifiersInParent() throws Exception {
+		File fl = new File("src/test/resources/examples/roleInParent/modifiers/left.java");
+		File fr = new File("src/test/resources/examples/roleInParent/modifiers/right.java");
+
+		Diff diff = new AstComparator().compare(fl, fr);
+
+		CtVirtualElement modifiers = (CtVirtualElement) diff.getRootOperations().get(0).getSrcNode();
+
+		assertEquals(CtRole.MODIFIER, modifiers.getRoleInParent());
+	}
+
+	@Test
+	public void test_typeOfUpdatedNodeShouldEqualCtTypeReference() {
+		String c1 = "class Child extends Parent1 { }";
+		String c2 = "class Child extends Parent2 { }";
+
+		Diff diff = new AstComparator().compare(c1, c2);
+
+		UpdateOperation updateOperation = (UpdateOperation) diff.getRootOperations().get(0);
+
+		assertThat(updateOperation.getSrcNode(), instanceOf(CtTypeReference.class));
+		assertThat(updateOperation.getDstNode(), instanceOf(CtTypeReference.class));
+	}
+
+	@Test
+	public void testGettingChildrenOfCtVirtualElement() {
+		String c1 = "class Test { }";
+		String c2 = "public abstract final class Test { }";
+
+		Diff editScript = new AstComparator().compare(c1, c2);
+
+		CtVirtualElement srcNode = (CtVirtualElement) editScript.getRootOperations().get(0).getSrcNode();
+		Set<?> modifiers = new HashSet<>(srcNode.getChildren());
+
+		Set<ModifierKind> expectedModifiers = new HashSet<>();
+		expectedModifiers.add(ModifierKind.PUBLIC);
+		expectedModifiers.add(ModifierKind.ABSTRACT);
+		expectedModifiers.add(ModifierKind.FINAL);
+
+
+		assertEquals(3, modifiers.size());
+		assertTrue(modifiers.containsAll(expectedModifiers));
+	}
 }
