@@ -208,7 +208,7 @@ public class AstComparator {
 	}
 
 
-	public static void main(String[] args) throws Exception {
+	public static void mainSocket(String[] args) throws Exception {
 		ServerSocket ss = new ServerSocket(12345);
 		while (true) {
 		Socket s = ss.accept();
@@ -230,7 +230,7 @@ public class AstComparator {
 		if (arguments.length != 3) {
 			break;
 		}
-		saveDiffMetrics(arguments);
+		main(arguments);
 		writer.println("");
 		writer.flush();
 		s.close();
@@ -238,7 +238,7 @@ public class AstComparator {
 	ss.close();
 	}
 
-	private static void saveDiffMetrics(String[] args) throws Exception {
+	public static void main(String[] args) throws Exception {
 		if (args.length != 3) {
 			System.out.println("Usage: DiffSpoon <file_1>  <file_2> <out_file>");
 			return;
