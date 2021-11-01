@@ -100,14 +100,14 @@ public abstract class Operation<T extends Action> {
 		}
 		if (action instanceof Move) {
 			CtElement elementDest = (CtElement) action.getNode().getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT_DEST);
-			position = " from " + element.getParent(CtClass.class).getQualifiedName();
-			from_name = element.getParent(CtClass.class).getQualifiedName();
+			position = " from " + element.getParent(CtType.class).getQualifiedName();
+			from_name = element.getParent(CtType.class).getQualifiedName();
 			if (element.getPosition() != null && !(element.getPosition() instanceof NoSourcePosition)) {
 				position += ":" + element.getPosition().getLine();
 				from_line = "" + element.getPosition().getLine();
 			}
-			position += " to " + elementDest.getParent(CtClass.class).getQualifiedName();
-			to_name = elementDest.getParent(CtClass.class).getQualifiedName();
+			position += " to " + elementDest.getParent(CtType.class).getQualifiedName();
+			to_name = elementDest.getParent(CtType.class).getQualifiedName();
 			if (elementDest.getPosition() != null && !(elementDest.getPosition() instanceof NoSourcePosition)) {
 				position += ":" + elementDest.getPosition().getLine();
 				to_line = "" + elementDest.getPosition().getLine();
