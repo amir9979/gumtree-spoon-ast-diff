@@ -26,7 +26,6 @@ public interface Diff {
 	 */
 	List<Operation> getAllOperations();
 
-
 	/**
 	 * lists all operations sub the given parent operation.
 	 */
@@ -68,6 +67,10 @@ public interface Diff {
 	 */
 	boolean containsOperations(List<Operation> operations, OperationKind kind, String nodeKind, String nodeLabel);
 
+	/**
+	 * low level if you want to test on all operations and not only root operations
+	 */
+	boolean containsOperations(List<Operation> operations, OperationKind kind, String nodeKind);
 
 	/**
 	 * outputs debug information to System.out
