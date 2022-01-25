@@ -2,7 +2,7 @@ package diffson;
 
 import java.util.List;
 
-import com.github.gumtreediff.tree.ITree;
+import com.github.gumtreediff.tree.Tree;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
@@ -13,7 +13,7 @@ import gumtree.spoon.diff.operations.Operation;
 
 public class PatternPainter implements NodePainter {
 
-	MapList<ITree, String> nodesAffectedByPattern = new MapList<>();
+	MapList<Tree, String> nodesAffectedByPattern = new MapList<>();
 	String label;
 
 	public PatternPainter(MapList<Operation, String> patternsPerOp, String label) {
@@ -30,7 +30,7 @@ public class PatternPainter implements NodePainter {
 	}
 
 	@Override
-	public void paint(ITree tree, JsonObject jsontree) {
+	public void paint(Tree tree, JsonObject jsontree) {
 
 		if (nodesAffectedByPattern.containsKey(tree)) {
 

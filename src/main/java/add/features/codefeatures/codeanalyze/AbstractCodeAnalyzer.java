@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.github.gumtreediff.tree.ITree;
+import com.github.gumtreediff.tree.Tree;
 
 import add.features.codefeatures.Cntx;
 import add.features.codefeatures.CodeElementInfo;
@@ -69,7 +69,7 @@ public abstract class AbstractCodeAnalyzer {
 	
 	public String adjustIdentifyInJson (CtElement spoonElement) { 
 			
-			ITree gumtreeObject=(ITree) spoonElement.getMetadata("gtnode");
+			Tree gumtreeObject=(Tree) spoonElement.getMetadata("gtnode");
 			
 			return gumtreeObject.getLabel();
     }

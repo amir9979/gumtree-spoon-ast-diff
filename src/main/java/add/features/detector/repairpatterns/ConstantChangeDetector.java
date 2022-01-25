@@ -2,7 +2,7 @@ package add.features.detector.repairpatterns;
 
 import java.util.List;
 
-import com.github.gumtreediff.tree.ITree;
+import com.github.gumtreediff.tree.Tree;
 
 import add.entities.PatternInstance;
 import add.entities.PropertyPair;
@@ -43,7 +43,7 @@ public class ConstantChangeDetector extends AbstractPatternDetector {
 				return;
 			}
 			CtElement parent = MappingAnalysis.getParentLine(new LineFilter(), srcNode);
-			ITree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(parent);
+			Tree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(parent);
 
 			if (srcNode instanceof CtLiteral) {
 				repairPatterns.incrementFeatureCounterInstance(CONST_CHANGE,
@@ -67,7 +67,7 @@ public class ConstantChangeDetector extends AbstractPatternDetector {
 						if (((InsertOperation) operation2Insert).getParent() == ctLiteral.getParent()
 								&& isConstantVariable) {
 							CtElement parent = MappingAnalysis.getParentLine(new LineFilter(), ctLiteral);
-							ITree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(parent);
+							Tree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(parent);
 
 							repairPatterns.incrementFeatureCounterInstance(CONST_CHANGE,
 									new PatternInstance(CONST_CHANGE, operation2Insert,

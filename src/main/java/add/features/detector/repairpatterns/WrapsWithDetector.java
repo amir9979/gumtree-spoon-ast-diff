@@ -3,7 +3,7 @@ package add.features.detector.repairpatterns;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.github.gumtreediff.tree.ITree;
+import com.github.gumtreediff.tree.Tree;
 
 import add.entities.PatternInstance;
 import add.entities.PropertyPair;
@@ -94,7 +94,7 @@ public class WrapsWithDetector extends AbstractPatternDetector {
 
 						if (thenBlock != null && !stmtsMoved.isEmpty()) {
 							if (operation instanceof InsertOperation) {
-								List<ITree> leftTreees = new ArrayList();
+								List<Tree> leftTreees = new ArrayList();
 								List<CtElement> leftElements = new ArrayList();
 
 								calculatorLeftInformation(stmtsMoved, leftTreees, leftElements);
@@ -116,7 +116,7 @@ public class WrapsWithDetector extends AbstractPatternDetector {
 								CtElement lineP = MappingAnalysis.getParentLine(new LineFilter(),
 										(CtElement) susp.get(0));
 
-								ITree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
+								Tree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
 
 								repairPatterns.incrementFeatureCounterInstance(UNWRAP_IF_ELSE, //
 										new PatternInstance(UNWRAP_IF_ELSE, operation, (CtElement) stmtsMoved.get(0),
@@ -138,7 +138,7 @@ public class WrapsWithDetector extends AbstractPatternDetector {
 
 								CtElement lineP = MappingAnalysis.getParentLine(new LineFilter(),
 										(CtElement) moved.get(0));
-								ITree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
+								Tree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
 
 								repairPatterns.incrementFeatureCounterInstance(WRAPS_IF_ELSE,
 										new PatternInstance(WRAPS_IF_ELSE, operation, ctIf, moved, lineP, lineTree,
@@ -151,7 +151,7 @@ public class WrapsWithDetector extends AbstractPatternDetector {
 
 								CtElement lineP = MappingAnalysis.getParentLine(new LineFilter(),
 										(CtElement) susp.get(0));
-								ITree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
+								Tree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
 
 								repairPatterns.incrementFeatureCounterInstance(UNWRAP_IF_ELSE, //
 										new PatternInstance(UNWRAP_IF_ELSE, operation, (CtElement) moved.get(0), susp,
@@ -176,13 +176,13 @@ public class WrapsWithDetector extends AbstractPatternDetector {
 								CtElement suspRigh = (thenExpression.getMetadata("new") != null) ? elseExpression
 										: thenExpression;
 
-								ITree leftMoved = MappingAnalysis.getLeftFromRightNodeMapped(diff,
-										(ITree) suspRigh.getMetadata("gtnode"));
+								Tree leftMoved = MappingAnalysis.getLeftFromRightNodeMapped(diff,
+										(Tree) suspRigh.getMetadata("gtnode"));
 
 								CtElement susp = (CtElement) leftMoved.getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT);
 
 								CtElement lineP = MappingAnalysis.getParentLine(new LineFilter(), susp);
-								ITree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
+								Tree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
 
 								repairPatterns.incrementFeatureCounterInstance(WRAPS_IF_ELSE, new PatternInstance(
 										WRAPS_IF_ELSE, operation, ctConditional, susp, lineP, lineTree, 
@@ -204,7 +204,7 @@ public class WrapsWithDetector extends AbstractPatternDetector {
 								}
 								CtElement lineP = MappingAnalysis.getParentLine(new LineFilter(),
 										(CtElement) susps.get(0));
-								ITree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
+								Tree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
 
 								repairPatterns.incrementFeatureCounterInstance(UNWRAP_IF_ELSE,
 										new PatternInstance(UNWRAP_IF_ELSE, operation, patch, ctConditional, lineP, lineTree));
@@ -220,7 +220,7 @@ public class WrapsWithDetector extends AbstractPatternDetector {
 										if (node2.getParent() == ((InsertOperation) operation).getParent()) {
 
 											CtElement lineP = MappingAnalysis.getParentLine(new LineFilter(), node2);
-											ITree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
+											Tree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
 
 											repairPatterns.incrementFeatureCounterInstance(WRAPS_IF_ELSE,
 													new PatternInstance(WRAPS_IF_ELSE, operation, ctConditional, node2,
@@ -236,11 +236,11 @@ public class WrapsWithDetector extends AbstractPatternDetector {
 		}
 	}
 
-	public void calculatorLeftInformation(List stmtsMoved, List<ITree> leftTreees, List<CtElement> leftElements) {
+	public void calculatorLeftInformation(List stmtsMoved, List<Tree> leftTreees, List<CtElement> leftElements) {
 		for (Object object : stmtsMoved) {
 			CtElement moved = (CtElement) object;
 			
-			ITree mappedLeft = MappingAnalysis.getLeftFromRightNodeMapped(diff, moved);
+			Tree mappedLeft = MappingAnalysis.getLeftFromRightNodeMapped(diff, moved);
 			if (mappedLeft != null) {
 				leftTreees.add(mappedLeft);
 				CtElement element = (CtElement) mappedLeft.getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT);
@@ -267,7 +267,7 @@ public class WrapsWithDetector extends AbstractPatternDetector {
 						if (tryBodyBlock != null && !olds.isEmpty()) {
 							CtElement lineP = MappingAnalysis.getParentLine(new LineFilter(), (CtElement) olds.get(0));
 
-							ITree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
+							Tree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
 
 						if(!((CtElement) olds.get(0) instanceof CtTry))
 							if (operation instanceof InsertOperation) {
@@ -286,7 +286,7 @@ public class WrapsWithDetector extends AbstractPatternDetector {
 
 											CtElement lineP = MappingAnalysis.getParentLine(new LineFilter(),
 													operationAux.getSrcNode());
-											ITree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
+											Tree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
 				                            
 											if(!(operationAux.getSrcNode() instanceof CtTry))
 											     repairPatterns.incrementFeatureCounterInstance(WRAPS_TRY_CATCH,
@@ -318,7 +318,7 @@ public class WrapsWithDetector extends AbstractPatternDetector {
 							if (invocationArguments.contains(elementRemoved)) {
 
 								CtElement lineP = MappingAnalysis.getParentLine(new LineFilter(), elementRemoved);
-								ITree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
+								Tree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
 								repairPatterns.incrementFeatureCounterInstance(WRAPS_METHOD,
 										new PatternInstance(WRAPS_METHOD, operation, ctInvocation, elementRemoved,
 												lineP, lineTree, new PropertyPair("Old", "VarRead"),
@@ -330,7 +330,7 @@ public class WrapsWithDetector extends AbstractPatternDetector {
 							if (invocationArguments.contains(((CtAssignment) elementRemoved).getAssignment())) {
 
 								CtElement lineP = MappingAnalysis.getParentLine(new LineFilter(), elementRemoved);
-								ITree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
+								Tree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
 
 								repairPatterns.incrementFeatureCounterInstance(WRAPS_METHOD,
 										new PatternInstance(WRAPS_METHOD, operation, ctInvocation,
@@ -350,7 +350,7 @@ public class WrapsWithDetector extends AbstractPatternDetector {
 							return;
 
 						CtElement lineP = MappingAnalysis.getParentLine(new LineFilter(), suspLeft.get(0));
-						ITree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
+						Tree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
 						if(RepairPatternUtils.getIsInvocationInStatemnt(diff, lineP, ctInvocation)) {
 							  if(RepairPatternUtils.getElementInOld(diff, ctExpression)!=null && (RepairPatternUtils.getElementInOld(diff, ctExpression).getParent() instanceof CtConstructorCall ||
 									  RepairPatternUtils.getElementInOld(diff, ctExpression).getParent() instanceof CtInvocation)
@@ -382,7 +382,7 @@ public class WrapsWithDetector extends AbstractPatternDetector {
 								{
 								   CtElement lineP = MappingAnalysis.getParentLine(new LineFilter(),
 										operation.getSrcNode());
-								   ITree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
+								   Tree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
 
 								   repairPatterns.incrementFeatureCounterInstance(UNWRAP_METHOD, new PatternInstance(
 										UNWRAP_METHOD, operation, statementParent, ctInvocation, lineP, lineTree));
@@ -408,7 +408,7 @@ public class WrapsWithDetector extends AbstractPatternDetector {
 							if (constructorArguments.contains(elementRemoved)) {
 
 								CtElement lineP = MappingAnalysis.getParentLine(new LineFilter(), elementRemoved);
-								ITree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
+								Tree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
 								repairPatterns.incrementFeatureCounterInstance(WRAPS_METHOD,
 										new PatternInstance(WRAPS_METHOD, operation, ctConstructor, elementRemoved,
 												lineP, lineTree, new PropertyPair("Old", "VarRead"),
@@ -420,7 +420,7 @@ public class WrapsWithDetector extends AbstractPatternDetector {
 							if (constructorArguments.contains(((CtAssignment) elementRemoved).getAssignment())) {
 
 								CtElement lineP = MappingAnalysis.getParentLine(new LineFilter(), elementRemoved);
-								ITree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
+								Tree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
 
 								repairPatterns.incrementFeatureCounterInstance(WRAPS_METHOD,
 										new PatternInstance(WRAPS_METHOD, operation, ctConstructor,
@@ -440,7 +440,7 @@ public class WrapsWithDetector extends AbstractPatternDetector {
 							return;
 
 						CtElement lineP = MappingAnalysis.getParentLine(new LineFilter(), suspLeft.get(0));
-						ITree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
+						Tree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
 						if(RepairPatternUtils.getIsInvocationInStatemnt(diff, lineP, ctConstructor)) {
 							
 							 if(RepairPatternUtils.getElementInOld(diff, ctExpression)!=null && 
@@ -474,7 +474,7 @@ public class WrapsWithDetector extends AbstractPatternDetector {
 								{
 								   CtElement lineP = MappingAnalysis.getParentLine(new LineFilter(),
 										operation.getSrcNode());
-								   ITree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
+								   Tree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
 
 								   repairPatterns.incrementFeatureCounterInstance(UNWRAP_METHOD, new PatternInstance(
 										UNWRAP_METHOD, operation, statementParent, ctConstructor, lineP, lineTree));
@@ -488,7 +488,7 @@ public class WrapsWithDetector extends AbstractPatternDetector {
 	}
 	
 	 private boolean whetherconsindertheconstructorunrap (CtExpression oldexpression, CtConstructorCall ctCall) {
-		ITree treenewexpression= MappingAnalysis.getRightFromLeftNodeMapped(diff, oldexpression); 
+		Tree treenewexpression= MappingAnalysis.getRightFromLeftNodeMapped(diff, oldexpression);
 
 		if(treenewexpression==null)
 			return false;
@@ -506,7 +506,7 @@ public class WrapsWithDetector extends AbstractPatternDetector {
 	}
 	
 	private boolean whetherconsinderthemethodunrap (CtExpression oldexpression, CtInvocation ctInvocation) {
-		ITree treenewexpression= MappingAnalysis.getRightFromLeftNodeMapped(diff, oldexpression); 
+		Tree treenewexpression= MappingAnalysis.getRightFromLeftNodeMapped(diff, oldexpression);
 
 		if(treenewexpression==null)
 			return false;
@@ -541,7 +541,7 @@ public class WrapsWithDetector extends AbstractPatternDetector {
 						if (bodyBlock != null && !susp.isEmpty()) {
 
 							CtElement lineP = MappingAnalysis.getParentLine(new LineFilter(), (CtElement) susp.get(0));
-							ITree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
+							Tree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
 
 							repairPatterns.incrementFeatureCounterInstance(WRAPS_LOOP,
 									new PatternInstance(WRAPS_LOOP, operation, ctLoop, susp, lineP, lineTree));
@@ -554,7 +554,7 @@ public class WrapsWithDetector extends AbstractPatternDetector {
 
 										CtElement lineP = MappingAnalysis.getParentLine(new LineFilter(),
 												operationAux.getSrcNode());
-										ITree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
+										Tree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(lineP);
 
 										if(!RepairPatternUtils.isOldStatementInLoop(lineP))
 										   repairPatterns.incrementFeatureCounterInstance(WRAPS_LOOP,

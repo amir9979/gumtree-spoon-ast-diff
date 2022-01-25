@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-import com.github.gumtreediff.tree.ITree;
+import com.github.gumtreediff.tree.Tree;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -424,7 +424,7 @@ public class DiffContextAnalyzer {
 		List<PatternInstance> patternInstancesMerged = merge(patternInstancesOriginal);
 
 		for (PatternInstance patternInstance : patternInstancesMerged) {
-			Set<ITree> allTreeparents = new HashSet<>();
+			Set<Tree> allTreeparents = new HashSet<>();
 			Operation opi = patternInstance.getOp();
 
 			List<CtElement> faulties = null;
@@ -434,7 +434,7 @@ public class DiffContextAnalyzer {
 			if(whetherDiscardElement(getAffectedCtElement))
 			       continue;
 			
-			ITree faultyTree = patternInstance.getFaultyTree();
+			Tree faultyTree = patternInstance.getFaultyTree();
 			if (faultyTree != null) {
 
 				faultyTree = MappingAnalysis.getFormatedTreeFromControlFlow(faultyTree,
@@ -455,11 +455,11 @@ public class DiffContextAnalyzer {
 				}
 
 				for (CtElement faulty : faulties) {
-					ITree nodeFaulty = (ITree) faulty.getMetadata("gtnode");
+					Tree nodeFaulty = (Tree) faulty.getMetadata("gtnode");
 
 					if (nodeFaulty != null) {
 
-						ITree transformedTree = MappingAnalysis.getFormatedTreeFromControlFlow(nodeFaulty,
+						Tree transformedTree = MappingAnalysis.getFormatedTreeFromControlFlow(nodeFaulty,
 								(CtElement) faulty.getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT));
 
 						allTreeparents.add(transformedTree);
@@ -476,8 +476,8 @@ public class DiffContextAnalyzer {
 
 			JsonObject jsonInstance = new JsonObject();
 			JsonArray affected = new JsonArray();
-			for (ITree iTree : allTreeparents) {
-				JsonObject jsonT = jsongen.getJSONwithCustorLabels(((DiffImpl) diff).getContext(), iTree, painters);
+			for (Tree Tree : allTreeparents) {
+				JsonObject jsonT = jsongen.getJSONwithCustorLabels(((DiffImpl) diff).getContext(), Tree, painters);
 				affected.add(jsonT);
 			}
 			

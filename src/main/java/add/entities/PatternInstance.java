@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.github.gumtreediff.tree.ITree;
+import com.github.gumtreediff.tree.Tree;
 
 import gumtree.spoon.diff.operations.Operation;
 import spoon.reflect.declaration.CtElement;
@@ -16,11 +16,11 @@ public class PatternInstance {
 	CtElement solution;
 	List<CtElement> faultyStatements = new ArrayList<>();
 	CtElement faultyLine;
-	ITree faultyTree;
+	Tree faultyTree;
 	List<PropertyPair> metadata;
 
 	public PatternInstance(String patternName, Operation op, CtElement nodeAffectedOp, CtElement faultyElement,
-			CtElement faultyLine, ITree tree, PropertyPair... metadata) {
+			CtElement faultyLine, Tree tree, PropertyPair... metadata) {
 		super();
 		this.patternName = patternName;
 		this.op = op;
@@ -32,7 +32,7 @@ public class PatternInstance {
 	}
 
 	public PatternInstance(String patternName, Operation op, CtElement nodeAffectedOp, List<CtElement> faultyStatements,
-			CtElement faultyLine, ITree faultyAST_Tree, PropertyPair... metadata) {
+			CtElement faultyLine, Tree faultyAST_Tree, PropertyPair... metadata) {
 		super();
 		this.patternName = patternName;
 		this.op = op;
@@ -90,11 +90,11 @@ public class PatternInstance {
 		this.faultyLine = suspiciousElement;
 	}
 
-	public ITree getFaultyTree() {
+	public Tree getFaultyTree() {
 		return faultyTree;
 	}
 
-	public void setFaultyTree(ITree faultyTree) {
+	public void setFaultyTree(Tree faultyTree) {
 		this.faultyTree = faultyTree;
 	}
 

@@ -8,7 +8,7 @@ import com.github.gumtreediff.actions.model.Action;
 import com.github.gumtreediff.actions.model.Addition;
 import com.github.gumtreediff.actions.model.Insert;
 import com.github.gumtreediff.matchers.Mapping;
-import com.github.gumtreediff.tree.ITree;
+import com.github.gumtreediff.tree.Tree;
 
 import gumtree.spoon.builder.SpoonGumTreeBuilder;
 import gumtree.spoon.diff.Diff;
@@ -36,15 +36,40 @@ public class MappingAnalysis {
 	public final static int MAX_CHILDREN_FOREACH = 2;
 	public final static int MAX_CHILDREN_SWITCH = 1;
 
-	public static ITree getParentInSource(Diff diff, Action affectedAction) {
-		ITree affected = null;
+	public static Tree firstMappedSrcParent(Diff diff, Tree src) {
+		Tree p = src.getParent();
+		if (p == null) return null;
+		else {
+			while (!diff.getMappingsComp().isSrcMapped(p)) {
+				p = p.getParent();
+				if (p == null) return p;
+			}
+			return p;
+		}
+	}
+
+	public static Tree firstMappedDstParent(Diff diff, Tree dst) {
+		Tree p = dst.getParent();
+		if (p == null) return null;
+		else {
+			while (!diff.getMappingsComp().isDstMapped(p)) {
+				p = p.getParent();
+				if (p == null) return p;
+			}
+			return p;
+		}
+	}
+
+
+		public static Tree getParentInSource(Diff diff, Action affectedAction) {
+		Tree affected = null;
 		if (affectedAction instanceof Addition) {
 
-			ITree parentInRight = diff.getMappingsComp().firstMappedDstParent(affectedAction.getNode());
+			Tree parentInRight = firstMappedDstParent(diff, affectedAction.getNode());
 			if (parentInRight != null)
-				return (diff).getMappingsComp().getSrc(parentInRight);
+				return (diff).getMappingsComp().getSrcForDst(parentInRight);
 			else {
-				return diff.getMappingsComp().firstMappedSrcParent(affectedAction.getNode());
+				return firstMappedSrcParent(diff, affectedAction.getNode());
 			}
 
 		} else {
@@ -55,28 +80,28 @@ public class MappingAnalysis {
 		return affected;
 	}
 
-	public static ITree getTreeInLeft(Diff diff, CtElement elementRight) {
+	public static Tree getTreeInLeft(Diff diff, CtElement elementRight) {
 
 		for (Mapping ms : diff.getMappingsComp().asSet()) {
-			if (isIn(elementRight, ms.getSecond())) {
-				return ms.getFirst();
+			if (isIn(elementRight, ms.second)) {
+				return ms.first;
 			}
 		}
 		return null;
 	}
 
-	public static ITree getParentInRight(Diff diff, Action affectedAction) {
+	public static Tree getParentInRight(Diff diff, Action affectedAction) {
 
-		ITree parentInLeft = diff.getMappingsComp().firstMappedSrcParent(affectedAction.getNode());
+		Tree parentInLeft = firstMappedSrcParent(diff,affectedAction.getNode());
 		if (parentInLeft != null)
-			return diff.getMappingsComp().getDst(parentInLeft);
+			return diff.getMappingsComp().getDstForSrc(parentInLeft);
 		else {
-			return diff.getMappingsComp().firstMappedDstParent(affectedAction.getNode());
+			return firstMappedDstParent(diff, affectedAction.getNode());
 		}
 		
 	}
 
-	public static boolean isIn(CtElement faulty, ITree ctree) {
+	public static boolean isIn(CtElement faulty, Tree ctree) {
 		Object metadata = ctree.getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT);
 
 		boolean save = /* ctree.hasLabel() && */metadata != null && metadata.equals(faulty);
@@ -148,10 +173,10 @@ public class MappingAnalysis {
 
 	public static List<CtElement> getAllStatementsOfParent(Addition maction) {
 		List<CtElement> suspicious = new ArrayList();
-		ITree treeparent = maction.getParent();
-		List<ITree> s = treeparent.getChildren();
-		for (ITree iTree : s) {
-			CtElement e = (CtElement) iTree.getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT);
+		Tree treeparent = maction.getParent();
+		List<Tree> s = treeparent.getChildren();
+		for (Tree Tree : s) {
+			CtElement e = (CtElement) Tree.getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT);
 			if (e instanceof CtStatement)
 				suspicious.add(e);
 		}
@@ -159,38 +184,38 @@ public class MappingAnalysis {
 	}
 
 	@SuppressWarnings("unused")
-	public static ITree getFormatedTreeFromControlFlow(CtElement parentLine) {
+	public static Tree getFormatedTreeFromControlFlow(CtElement parentLine) {
 
-		ITree lineTree = (ITree) ((parentLine.getMetadata("tree") != null) ? parentLine.getMetadata("tree")
+		Tree lineTree = (Tree) ((parentLine.getMetadata("tree") != null) ? parentLine.getMetadata("tree")
 				: parentLine.getMetadata("gtnode"));
 
 		return getFormatedTreeFromControlFlow(lineTree, parentLine);
 	}
 
-	public static ITree getFormatedTreeFromControlFlow(ITree lineTree, CtElement parentLine) {
+	public static Tree getFormatedTreeFromControlFlow(Tree lineTree, CtElement parentLine) {
 
 		if (parentLine instanceof CtIf) {
 
-			ITree copiedIfTree = lineTree.deepCopy();
+			Tree copiedIfTree = lineTree.deepCopy();
 			// We keep only the first child (the condition)
 
 			// We remove the else
 			if (copiedIfTree.getChildren().size() == 3) {
 
-				ITree elseTree = copiedIfTree.getChildren().get(2);
+				Tree elseTree = copiedIfTree.getChildren().get(2);
 				copiedIfTree.getChildren().remove(2);
 			}
 			// we remove the then
 			if (copiedIfTree.getChildren().size() == 2) {
 
-				// ITree thenTree = copiedIfTree.getChildren().get(1);
+				// Tree thenTree = copiedIfTree.getChildren().get(1);
 				copiedIfTree.getChildren().remove(1);
 			}
 
 			return copiedIfTree;
 
 		} else if (parentLine instanceof CtWhile) {
-			ITree copiedIfTree = lineTree.deepCopy();
+			Tree copiedIfTree = lineTree.deepCopy();
 
 			// CtElement metadatakeep = (CtElement) copiedIfTree.getChildren().get(0)
 			// .getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT);
@@ -211,7 +236,7 @@ public class MappingAnalysis {
 		} else // || parentLine instanceof CtForEach
 		if (parentLine instanceof CtFor) {
 
-			ITree copiedIfTree = lineTree.deepCopy();
+			Tree copiedIfTree = lineTree.deepCopy();
 
 			for (int i = lineTree.getChildren().size() - 1; i >= MappingAnalysis.MAX_CHILDREN_FOR; i--) {
 				// printMetadata(copiedIfTree, i);
@@ -221,7 +246,7 @@ public class MappingAnalysis {
 			return copiedIfTree;
 		} else if (parentLine instanceof CtForEach) {
 
-			ITree copiedIfTree = lineTree.deepCopy();
+			Tree copiedIfTree = lineTree.deepCopy();
 
 			for (int i = lineTree.getChildren().size() - 1; i >= MappingAnalysis.MAX_CHILDREN_FOREACH; i--) {
 				// printMetadata(copiedIfTree, i);
@@ -231,7 +256,7 @@ public class MappingAnalysis {
 			return copiedIfTree;
 		} else if (parentLine instanceof CtDo) {
 
-			ITree copiedIfTree = lineTree.deepCopy();
+			Tree copiedIfTree = lineTree.deepCopy();
 
 			for (int i = lineTree.getChildren().size() - 1; i >= MappingAnalysis.MAX_CHILDREN_DO; i--) {
 
@@ -240,7 +265,7 @@ public class MappingAnalysis {
 			return copiedIfTree;
 		} else if (parentLine instanceof CtSwitch) {
 
-			ITree copiedIfTree = lineTree.deepCopy();
+			Tree copiedIfTree = lineTree.deepCopy();
 
 			for (int i = lineTree.getChildren().size() - 1; i >= MappingAnalysis.MAX_CHILDREN_SWITCH; i--) {
 
@@ -253,7 +278,7 @@ public class MappingAnalysis {
 
 	}
 
-	public static void printMetadata(ITree copiedIfTree, int i) {
+	public static void printMetadata(Tree copiedIfTree, int i) {
 		CtElement metadata = (CtElement) copiedIfTree.getChildren().get(i)
 				.getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT);
 		// System.out.println("Removing: " + metadata);
@@ -266,15 +291,15 @@ public class MappingAnalysis {
 	 * @param maction
 	 * @return
 	 */
-	public static List<ITree> getFollowStatementsInLeft(Diff diff, Addition maction) {
+	public static List<Tree> getFollowStatementsInLeft(Diff diff, Addition maction) {
 
-		List<ITree> followingInLeft = new ArrayList();
+		List<Tree> followingInLeft = new ArrayList();
 
-		ITree parentRight = null;
+		Tree parentRight = null;
 		if (maction instanceof Insert) {
 
 			// Node at right
-			ITree affectedRight = maction.getNode();
+			Tree affectedRight = maction.getNode();
 			// Parent at right
 			parentRight = affectedRight.getParent();
 			int position = getPositionInParent(parentRight, affectedRight);
@@ -283,12 +308,12 @@ public class MappingAnalysis {
 				int nrSiblings = parentRight.getChildren().size();
 				if (position == nrSiblings - 1) {
 					// The last element, let's suppose suspicious
-					List<ITree> followingSiblingsInRing = new ArrayList((parentRight.getChildren()));
+					List<Tree> followingSiblingsInRing = new ArrayList((parentRight.getChildren()));
 					Collections.reverse(followingSiblingsInRing);
 					computeLeftFromRight(diff, followingInLeft, followingSiblingsInRing);
 
 				} else {
-					List<ITree> followingSiblingsInRing = parentRight.getChildren().subList(position + 1, nrSiblings);
+					List<Tree> followingSiblingsInRing = parentRight.getChildren().subList(position + 1, nrSiblings);
 					computeLeftFromRight(diff, followingInLeft, followingSiblingsInRing);
 
 					if (followingInLeft.isEmpty()) {
@@ -308,11 +333,11 @@ public class MappingAnalysis {
 		return followingInLeft;
 	}
 
-	public static void computeLeftFromRight(Diff diff, List<ITree> followingInLeft,
-			List<ITree> followingSiblingsInRing) {
-		for (ITree siblingRight : followingSiblingsInRing) {
+	public static void computeLeftFromRight(Diff diff, List<Tree> followingInLeft,
+			List<Tree> followingSiblingsInRing) {
+		for (Tree siblingRight : followingSiblingsInRing) {
 			// The mapped at the left
-			ITree mappedSiblingLeft = getLeftFromRightNodeMapped(diff, siblingRight);
+			Tree mappedSiblingLeft = getLeftFromRightNodeMapped(diff, siblingRight);
 
 			if (mappedSiblingLeft != null) {
 				// lets check if it's null
@@ -328,9 +353,9 @@ public class MappingAnalysis {
 		}
 	}
 
-	public static int getPositionInParent(ITree parent, ITree element) {
+	public static int getPositionInParent(Tree parent, Tree element) {
 		int i = 0;
-		for (ITree child : parent.getChildren()) {
+		for (Tree child : parent.getChildren()) {
 			if (child == element)
 				return i;
 			i++;
@@ -338,10 +363,10 @@ public class MappingAnalysis {
 		return -1;
 	}
 
-	private static boolean isRightNodeMapped(Diff diff, ITree iTree) {
+	private static boolean isRightNodeMapped(Diff diff, Tree Tree) {
 
 		for (Mapping map : diff.getMappingsComp().asSet()) {
-			if (map.getSecond().equals(iTree)) {
+			if (map.second.equals(Tree)) {
 				return true;
 			}
 		}
@@ -349,12 +374,12 @@ public class MappingAnalysis {
 		return false;
 	}
 
-	private static boolean isRightNodeMappedANDallChildren(Diff diff, ITree iTree) {
+	private static boolean isRightNodeMappedANDallChildren(Diff diff, Tree Tree) {
 
 		for (Mapping map : diff.getMappingsComp().asSet()) {
-			if (map.getSecond().equals(iTree)) {
+			if (map.second.equals(Tree)) {
 
-				for (ITree tc : iTree.getChildren()) {
+				for (Tree tc : Tree.getChildren()) {
 					if (!isRightNodeMappedANDallChildren(diff, tc))
 						return false;
 				}
@@ -365,45 +390,45 @@ public class MappingAnalysis {
 		return false;
 	}
 
-	public static ITree getLeftFromRightNodeMapped(Diff diff, CtElement element) {
+	public static Tree getLeftFromRightNodeMapped(Diff diff, CtElement element) {
 
-		ITree leftMoved = MappingAnalysis.getLeftFromRightNodeMapped(diff, (ITree) element.getMetadata("gtnode"));
+		Tree leftMoved = MappingAnalysis.getLeftFromRightNodeMapped(diff, (Tree) element.getMetadata("gtnode"));
 
 		return getLeftFromRightNodeMapped(diff, leftMoved);
 	}
 
-	public static ITree getLeftFromRightNodeMapped(Diff diff, ITree iTree) {
+	public static Tree getLeftFromRightNodeMapped(Diff diff, Tree Tree) {
 
 		for (Mapping map : diff.getMappingsComp().asSet()) {
-			if (map.getSecond().equals(iTree)) {
-				return map.getFirst();
+			if (map.second.equals(Tree)) {
+				return map.first;
 			}
 
 			// if it's in left, we return it
-			if (map.getFirst().equals(iTree)) {
-				return iTree;
+			if (map.first.equals(Tree)) {
+				return Tree;
 			}
 		}
 
 		return null;
 	}
 	
-	public static ITree getRightFromLeftNodeMapped(Diff diff, CtElement element) {
+	public static Tree getRightFromLeftNodeMapped(Diff diff, CtElement element) {
 
-		ITree rightMoved = MappingAnalysis.getRightFromLeftNodeMapped(diff, (ITree) element.getMetadata("gtnode"));
+		Tree rightMoved = MappingAnalysis.getRightFromLeftNodeMapped(diff, (Tree) element.getMetadata("gtnode"));
 
 		return getRightFromLeftNodeMapped(diff, rightMoved);
 	}
 
-	public static ITree getRightFromLeftNodeMapped(Diff diff, ITree iTree) {
+	public static Tree getRightFromLeftNodeMapped(Diff diff, Tree Tree) {
 
 		for (Mapping map : diff.getMappingsComp().asSet()) {
-			if (map.getFirst().equals(iTree)) {
-				return map.getSecond();
+			if (map.first.equals(Tree)) {
+				return map.second;
 			}
 			// if its in right, we return it
-			if (map.getSecond().equals(iTree)) {
-				return iTree;
+			if (map.second.equals(Tree)) {
+				return Tree;
 			}
 
 		}
@@ -419,8 +444,8 @@ public class MappingAnalysis {
 		List<CtElement> suspLeft = new ArrayList();
 		for (CtElement ctElement : movesInRight) {
 
-			ITree mappedLeft = MappingAnalysis.getLeftFromRightNodeMapped(diff,
-					(ITree) ctElement.getMetadata("gtnode"));
+			Tree mappedLeft = MappingAnalysis.getLeftFromRightNodeMapped(diff,
+					(Tree) ctElement.getMetadata("gtnode"));
 			if (mappedLeft != null) {
 				suspLeft.add((CtElement) mappedLeft.getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT));
 

@@ -6,7 +6,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.gumtreediff.tree.ITree;
+import com.github.gumtreediff.tree.Tree;
 
 import add.entities.PatternInstance;
 import add.entities.RepairPatterns;
@@ -125,7 +125,7 @@ public class MissingNullCheckDetector extends AbstractPatternDetector {
 								susp.addAll(soldelse);
 
 							CtElement lineP = null;
-							ITree lineTree = null;
+							Tree lineTree = null;
 							if (!susp.isEmpty()) {
 
 								lineP = MappingAnalysis.getParentLine(new LineFilter(), (CtElement) susp.get(0));
@@ -136,7 +136,7 @@ public class MissingNullCheckDetector extends AbstractPatternDetector {
 								// The next
 								InsertOperation operationIns = (InsertOperation) operation;
 
-								List<ITree> treeInLeft = MappingAnalysis.getFollowStatementsInLeft(diff,
+								List<Tree> treeInLeft = MappingAnalysis.getFollowStatementsInLeft(diff,
 										operationIns.getAction());
 
 								if (treeInLeft.isEmpty()) {
@@ -145,8 +145,8 @@ public class MissingNullCheckDetector extends AbstractPatternDetector {
 									continue;
 								}
 
-								for (ITree iTree : treeInLeft) {
-									susp.add((CtElement) iTree.getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT));
+								for (Tree Tree : treeInLeft) {
+									susp.add((CtElement) Tree.getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT));
 								}
 
 								lineP = susp.get(0);

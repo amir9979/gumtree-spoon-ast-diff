@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.github.gumtreediff.tree.ITree;
+import com.github.gumtreediff.tree.Tree;
 
 import add.entities.PatternInstance;
 import add.entities.PropertyPair;
@@ -77,7 +77,7 @@ public class ExpressionFixDetector extends AbstractPatternDetector {
 
 						CtElement parentLine = MappingAnalysis.getParentLine(filter, buggybinaryOperator);
 
-						ITree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(parentLine);
+						Tree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(parentLine);
 
 						repairPatterns.incrementFeatureCounterInstance(BIN_OPERATOR_MODIF,
 								new PatternInstance(BIN_OPERATOR_MODIF, operation, dstNode, buggybinaryOperator,
@@ -201,7 +201,7 @@ public class ExpressionFixDetector extends AbstractPatternDetector {
 							return;
 
 						CtElement parentLine = MappingAnalysis.getParentLine(filter, suspLeft.get(0));
-						ITree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(parentLine);
+						Tree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(parentLine);
 						///
 						
 						CtElement susplogical=suspLeft.get(0);
@@ -230,7 +230,7 @@ public class ExpressionFixDetector extends AbstractPatternDetector {
 					}
 					if (isThereOldCondition && isThereDeletedCondition) {
 
-						ITree parentAffectInRight = MappingAnalysis.getParentInRight(diff, operation.getAction());
+						Tree parentAffectInRight = MappingAnalysis.getParentInRight(diff, operation.getAction());
 						CtElement affected = (CtElement) parentAffectInRight
 								.getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT);
 
@@ -243,7 +243,7 @@ public class ExpressionFixDetector extends AbstractPatternDetector {
 
 						CtElement parentLine = MappingAnalysis.getParentLine(filter, binary);
 
-						ITree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(parentLine);
+						Tree lineTree = MappingAnalysis.getFormatedTreeFromControlFlow(parentLine);
 						
                         CtElement susplogical= removedNode;
 						

@@ -2,7 +2,7 @@ package diffson;
 
 import java.util.List;
 
-import com.github.gumtreediff.tree.ITree;
+import com.github.gumtreediff.tree.Tree;
 import com.google.gson.JsonObject;
 
 import add.features.detector.spoon.LogicalExpressionAnalyzer;
@@ -39,7 +39,7 @@ public class ReturnTypePainter implements NodePainter {
 	}
 	
 	@Override
-	public void paint(ITree tree, JsonObject jsontree) {
+	public void paint(Tree tree, JsonObject jsontree) {
 
 		CtElement ctelement = (CtElement) tree.getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT);
 		if (ctelement != null && ctelement instanceof CtExpression) {

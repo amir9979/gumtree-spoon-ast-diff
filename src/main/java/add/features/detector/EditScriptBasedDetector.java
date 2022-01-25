@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.github.gumtreediff.tree.ITree;
+import com.github.gumtreediff.tree.Tree;
 
 import add.features.FeatureAnalyzer;
 import add.features.detector.repairpatterns.MappingAnalysis;
@@ -128,7 +128,7 @@ public abstract class EditScriptBasedDetector extends FeatureAnalyzer {
 	 */
 	public static void setTreesLeftRight(Diff editScript, Operation operation, CtElement srcNode, CtElement dstNode) {
 		srcNode.putMetadata("tree", operation.getAction().getNode());
-		ITree rightnode = MappingAnalysis.getRightFromLeftNodeMapped(editScript, operation.getAction().getNode());
+		Tree rightnode = MappingAnalysis.getRightFromLeftNodeMapped(editScript, operation.getAction().getNode());
 		if (editScript != null) {
 			dstNode.putMetadata("tree", rightnode);
 		} else {

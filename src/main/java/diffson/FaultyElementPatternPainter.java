@@ -3,7 +3,7 @@ package diffson;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.github.gumtreediff.tree.ITree;
+import com.github.gumtreediff.tree.Tree;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
@@ -65,7 +65,7 @@ public class FaultyElementPatternPainter implements NodePainter {
 	}
 
 	@Override
-	public void paint(ITree tree, JsonObject jsontree) {
+	public void paint(Tree tree, JsonObject jsontree) {
 
 		CtElement ctelement = (CtElement) tree.getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT);
 

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import com.github.gumtreediff.tree.ITree;
+import com.github.gumtreediff.tree.Tree;
 
 import add.features.detector.repairpatterns.MappingAnalysis;
 import add.features.detector.spoon.filter.ReturnInsideConditionalFilter;
@@ -318,7 +318,7 @@ public class RepairPatternUtils {
 		for (CtStatement statement : statements) {
 			if (!RepairPatternUtils.isNewStatement(statement)) {
 
-				ITree leftMoved = MappingAnalysis.getLeftFromRightNodeMapped(diff, statement);
+				Tree leftMoved = MappingAnalysis.getLeftFromRightNodeMapped(diff, statement);
 				if (leftMoved != null) {
 					CtElement susp = (CtElement) leftMoved.getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT);
 					if (susp instanceof CtStatement) {
@@ -334,7 +334,7 @@ public class RepairPatternUtils {
 	}
 	
 	public static CtElement getElementInOld(Diff diff, CtElement elementInNew) {
-		ITree leftTree = MappingAnalysis.getLeftFromRightNodeMapped(diff, elementInNew);
+		Tree leftTree = MappingAnalysis.getLeftFromRightNodeMapped(diff, elementInNew);
 		CtElement oldElement = null;
 		if(leftTree!=null)
 		    oldElement = (CtElement) leftTree.getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT);
@@ -346,7 +346,7 @@ public class RepairPatternUtils {
     	
 		CtElement newline = MappingAnalysis.getParentLine(new LineFilter(), newinvocationorconstructor);
 
-		ITree treeoldline= MappingAnalysis.getRightFromLeftNodeMapped(diff, oldline); 
+		Tree treeoldline= MappingAnalysis.getRightFromLeftNodeMapped(diff, oldline);
 
 		if(treeoldline==null)
 			return false;
@@ -358,8 +358,8 @@ public class RepairPatternUtils {
 	
 	public static boolean getIsMovedExpressionInStatemnt(Diff diff, CtStatement oldstat, CtExpression oldexpression) {
 		
-		ITree rightTreeStat= MappingAnalysis.getRightFromLeftNodeMapped(diff, oldstat); 
-		ITree rightTreeExper= MappingAnalysis.getRightFromLeftNodeMapped(diff, oldexpression); 
+		Tree rightTreeStat= MappingAnalysis.getRightFromLeftNodeMapped(diff, oldstat);
+		Tree rightTreeExper= MappingAnalysis.getRightFromLeftNodeMapped(diff, oldexpression);
 
 		if(rightTreeStat==null || rightTreeExper==null)
 			return true;
