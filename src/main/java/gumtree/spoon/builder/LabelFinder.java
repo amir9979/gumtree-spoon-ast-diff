@@ -42,22 +42,12 @@ class LabelFinder extends CtInheritanceScanner {
 
 	@Override
 	public <T> void visitCtInvocation(CtInvocation<T> invocation) {
-		if (invocation.getExecutable() != null) {
-			CtTypeReference decl = invocation.getExecutable().getDeclaringType();
-			// label =
-			// (decl!=null?decl.getQualifiedName():"")+"#"+invocation.getExecutable().getSignature();
-			// label = (decl != null ? decl.getQualifiedName() : "") + "#" +
-			// invocation.getExecutable().getSimpleName();
-			label = invocation.getExecutable().getSimpleName();
-
-		}
+		label = invocation.getExecutable().getSimpleName();
 	}
 
 	@Override
 	public <T> void visitCtConstructorCall(CtConstructorCall<T> ctConstructorCall) {
-		if (ctConstructorCall.getExecutable() != null) {
-			label = ctConstructorCall.getExecutable().getSignature();
-		}
+		label = ctConstructorCall.getExecutable().getSignature();
 	}
 
 	@Override
@@ -150,7 +140,7 @@ class LabelFinder extends CtInheritanceScanner {
 
 	@Override
 	public <T extends Annotation> void visitCtAnnotation(CtAnnotation<T> annotation) {
-		label = annotation.toString();
+		label = annotation.getType().getQualifiedName();
 	}
 
 	@Override
