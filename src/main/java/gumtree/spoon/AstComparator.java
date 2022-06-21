@@ -8,11 +8,21 @@ import java.util.Map;
 import java.io.*;
 import java.net.*;
 
+import com.github.gumtreediff.actions.model.Action;
 import add.entities.Feature;
 import add.entities.FeatureList;
 import add.features.detector.repairactions.RepairActionDetector;
 import add.features.detector.repairpatterns.RepairPatternDetector;
 import add.main.Config;
+import com.github.gumtreediff.actions.ChawatheScriptGenerator;
+import com.github.gumtreediff.actions.EditScript;
+import com.github.gumtreediff.actions.EditScriptGenerator;
+import com.github.gumtreediff.matchers.CompositeMatchers;
+import com.github.gumtreediff.matchers.MappingStore;
+import com.github.gumtreediff.matchers.Matcher;
+import com.github.gumtreediff.tree.Tree;
+import com.github.gumtreediff.tree.TreeContext;
+import com.github.gumtreediff.tree.TreeUtils;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -43,6 +53,15 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.api.CheckoutCommand;
 import org.eclipse.jgit.api.Git;
 import com.google.gson.JsonObject;
+import org.jgrapht.*;
+import org.jgrapht.graph.*;
+import org.jgrapht.nio.*;
+import org.jgrapht.nio.dot.*;
+import org.jgrapht.traverse.*;
+
+import java.io.*;
+import java.net.*;
+import java.util.*;
 
 
 /**
@@ -122,6 +141,13 @@ public class AstComparator {
 	}
 
 	/**
+	 * create graph of changes
+	 */
+	public void diff2graph(File f1, File f2) throws Exception {
+		this.diff2graph(getCtType(f1), getCtType(f2));
+	}
+
+	/**
 	 * compares two snippets
 	 */
 	public Diff compare(String left, String right) {
@@ -163,6 +189,66 @@ public class AstComparator {
 	public Diff compare(CtElement left, CtElement right) {
 		final SpoonGumTreeBuilder scanner = new SpoonGumTreeBuilder();
 		return new DiffImpl(scanner.getTreeContext(), scanner.getTree(left), scanner.getTree(right));
+	}
+
+	/**
+	 * create graph of changes
+	 */
+	public void diff2graph(CtElement left, CtElement right) throws Exception{
+		final SpoonGumTreeBuilder scanner = new SpoonGumTreeBuilder();
+		TreeContext context = scanner.getTreeContext();
+		Tree rootSpoonLeft = scanner.getTree(left);
+		Tree rootSpoonRight = scanner.getTree(right);
+
+		if (context == null) {
+			throw new IllegalArgumentException();
+		}
+		final MappingStore mappingsComp = new MappingStore(rootSpoonLeft, rootSpoonRight);
+
+		final Matcher matcher = new CompositeMatchers.ClassicGumtree();
+
+		MappingStore mappings = matcher.match(rootSpoonLeft, rootSpoonRight, mappingsComp);
+
+		EditScriptGenerator actionGenerator = new ChawatheScriptGenerator();
+
+		EditScript edComplete = actionGenerator.computeActions(mappings);
+
+		Graph<URI, DefaultEdge> g = new DefaultDirectedGraph<>(DefaultEdge.class);
+		Graph<Tree, String> g1 = new DefaultDirectedGraph<>(String.class);
+
+		for (Tree x: mappings.dst.breadthFirst()) {
+			Tree y = x.getParent();
+			g1.addVertex(x);
+			g1.addEdge(y, x, "dst_Tree");
+		}
+
+		for (Tree x: mappings.src.breadthFirst()) {
+			Tree y = x.getParent();
+			g1.addVertex(x);
+			g1.addEdge(y, x, "src_Tree");
+		}
+
+		for (Action A: edComplete){
+
+		}
+
+
+			URI google = new URI("http://www.google.com");
+		URI wikipedia = new URI("http://www.wikipedia.org");
+		URI jgrapht = new URI("http://www.jgrapht.org");
+
+		// add the vertices
+		g.addVertex(google);
+		g.addVertex(wikipedia);
+		g.addVertex(jgrapht);
+
+		// add edges to create linking structure
+		g.addEdge(jgrapht, wikipedia);
+		g.addEdge(google, jgrapht);
+		g.addEdge(google, wikipedia);
+		g.addEdge(wikipedia, google);
+
+
 	}
 
 	/**
@@ -268,6 +354,14 @@ public class AstComparator {
 		s.close();
 	}
 	ss.close();
+	}
+
+	public static void diff2graph(String[] args) throws Exception {
+		if (args.length != 3) {
+			System.out.println("Usage: DiffSpoon <file_1>  <file_2> <out_file>");
+			return;
+		}
+		new AstComparator().diff2graph(new File(args[0]), new File(args[1]));
 	}
 
 	public static void main(String[] args) throws Exception {

@@ -49,6 +49,16 @@
       <version>10.0.0</version>
     </dependency>
     <dependency>
+    <groupId>org.jgrapht</groupId>
+    <artifactId>jgrapht-core</artifactId>
+    <version>1.5.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jgrapht</groupId>
+      <artifactId>jgrapht-io</artifactId>
+      <version>1.5.1</version>
+    </dependency>
+    <dependency>
       <groupId>com.github.gumtreediff</groupId>
       <artifactId>core</artifactId>
       <version>3.0.0</version>
