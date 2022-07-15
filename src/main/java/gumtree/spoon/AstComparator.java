@@ -17,6 +17,9 @@ import add.main.Config;
 import com.github.gumtreediff.actions.ChawatheScriptGenerator;
 import com.github.gumtreediff.actions.EditScript;
 import com.github.gumtreediff.actions.EditScriptGenerator;
+import com.github.gumtreediff.actions.model.Addition;
+import com.github.gumtreediff.actions.model.Insert;
+import com.github.gumtreediff.actions.model.TreeAddition;
 import com.github.gumtreediff.matchers.CompositeMatchers;
 import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.matchers.Matcher;
@@ -31,6 +34,8 @@ import com.github.gumtreediff.matchers.GumtreeProperties;
 import gumtree.spoon.builder.SpoonGumTreeBuilder;
 import gumtree.spoon.diff.Diff;
 import gumtree.spoon.diff.DiffImpl;
+import org.jgrapht.nio.gexf.GEXFExporter;
+import org.jgrapht.nio.json.JSONExporter;
 import spoon.SpoonModelBuilder;
 import spoon.compiler.SpoonResource;
 import spoon.compiler.SpoonResourceHelper;
@@ -143,8 +148,8 @@ public class AstComparator {
 	/**
 	 * create graph of changes
 	 */
-	public void diff2graph(File f1, File f2) throws Exception {
-		this.diff2graph(getCtType(f1), getCtType(f2));
+	public Graph<Tree, Edge> diff2graph(File f1, File f2) throws Exception {
+		return this.diff2graph(getCtType(f1), getCtType(f2));
 	}
 
 	/**
@@ -194,7 +199,7 @@ public class AstComparator {
 	/**
 	 * create graph of changes
 	 */
-	public void diff2graph(CtElement left, CtElement right) throws Exception{
+	public Graph<Tree, Edge> diff2graph(CtElement left, CtElement right) throws Exception{
 		final SpoonGumTreeBuilder scanner = new SpoonGumTreeBuilder();
 		TreeContext context = scanner.getTreeContext();
 		Tree rootSpoonLeft = scanner.getTree(left);
@@ -213,42 +218,40 @@ public class AstComparator {
 
 		EditScript edComplete = actionGenerator.computeActions(mappings);
 
-		Graph<URI, DefaultEdge> g = new DefaultDirectedGraph<>(DefaultEdge.class);
-		Graph<Tree, String> g1 = new DefaultDirectedGraph<>(String.class);
+		Graph<Tree, Edge> g = new DefaultDirectedGraph<Tree, Edge>(Edge.class);
 
 		for (Tree x: mappings.dst.breadthFirst()) {
 			Tree y = x.getParent();
-			g1.addVertex(x);
-			g1.addEdge(y, x, "dst_Tree");
+			g.addVertex(x);
+			if (y != null) {
+				g.addVertex(y);
+				g.addEdge(y, x, new Edge(y, x, "dst_tree"));
+			}
 		}
 
 		for (Tree x: mappings.src.breadthFirst()) {
 			Tree y = x.getParent();
-			g1.addVertex(x);
-			g1.addEdge(y, x, "src_Tree");
+			g.addVertex(x);
+			if (y != null) {
+				g.addVertex(y);
+				g.addEdge(y, x, new Edge(y, x, "src_tree"));
+			}
 		}
 
-		for (Action A: edComplete){
-
+		for (Action action: edComplete){
+			Tree parent = null;
+			if (action instanceof Addition) {
+				parent = ((Addition)action).getParent();
+			}
+			if (action instanceof TreeAddition) {
+				parent = ((TreeAddition)action).getParent();
+			}
+			if (parent != null) {
+				g.addEdge(parent, action.getNode(), new Edge(parent, action.getNode(), action.getName()));
+			}
 		}
 
-
-			URI google = new URI("http://www.google.com");
-		URI wikipedia = new URI("http://www.wikipedia.org");
-		URI jgrapht = new URI("http://www.jgrapht.org");
-
-		// add the vertices
-		g.addVertex(google);
-		g.addVertex(wikipedia);
-		g.addVertex(jgrapht);
-
-		// add edges to create linking structure
-		g.addEdge(jgrapht, wikipedia);
-		g.addEdge(google, jgrapht);
-		g.addEdge(google, wikipedia);
-		g.addEdge(wikipedia, google);
-
-
+		return g;
 	}
 
 	/**
@@ -356,17 +359,10 @@ public class AstComparator {
 	ss.close();
 	}
 
-	public static void diff2graph(String[] args) throws Exception {
-		if (args.length != 3) {
-			System.out.println("Usage: DiffSpoon <file_1>  <file_2> <out_file>");
-			return;
-		}
-		new AstComparator().diff2graph(new File(args[0]), new File(args[1]));
-	}
 
 	public static void main(String[] args) throws Exception {
-		if (args.length != 3) {
-			System.out.println("Usage: DiffSpoon <file_1>  <file_2> <out_file>");
+		if (args.length != 4) {
+			System.out.println("Usage: DiffSpoon <file_1>  <file_2> <out_file> <out_graph>");
 			return;
 		}
 		final Diff result = new AstComparator().compare(new File(args[0]), new File(args[1]));
@@ -383,6 +379,25 @@ public class AstComparator {
 		try (Writer writer = new FileWriter(args[2])) {
 			Gson gson = new GsonBuilder().create();
 			gson.toJson(res, writer);
+		}
+		Graph<Tree, Edge> g = new AstComparator().diff2graph(new File(args[0]), new File(args[1]));
+		JSONExporter<Tree, Edge> exporter = new  JSONExporter<Tree, Edge>();
+		exporter.setVertexAttributeProvider((v) -> {
+			Map<String, Attribute> map = new LinkedHashMap<>();
+			map.put("metrics.size", DefaultAttribute.createAttribute(v.getMetrics().size));
+			map.put("metrics.height", DefaultAttribute.createAttribute(v.getMetrics().height));
+			map.put("metrics.hash", DefaultAttribute.createAttribute(v.getMetrics().hash));
+			map.put("metrics.structureHash", DefaultAttribute.createAttribute(v.getMetrics().structureHash));
+			map.put("metrics.depth", DefaultAttribute.createAttribute(v.getMetrics().depth));
+			map.put("metrics.position", DefaultAttribute.createAttribute(v.getMetrics().position));
+			map.put("label", DefaultAttribute.createAttribute(v.getLabel()));
+			map.put("type", DefaultAttribute.createAttribute(v.getType().toString()));
+			return map;
+		});
+		Writer writer = new StringWriter();
+		exporter.exportGraph(g, writer);
+		try (Writer graph_writer = new FileWriter(args[3])) {
+			graph_writer.write(writer.toString());
 		}
 	}
 }
